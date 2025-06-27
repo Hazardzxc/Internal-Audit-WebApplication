@@ -1,0 +1,170 @@
+﻿@model STD.Models.DB.AuditIssueSub
+@using STD.Models.DB;
+@{
+    Layout = null;
+    ViewData["Title"] = "";
+    string Title = "วิธีการตรวจสอบ";
+    List<AuditIssueActivityVerify> _ListAuditIssueActivityVerify = new List<AuditIssueActivityVerify>();
+    if (Model != null)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            _ListAuditIssueActivityVerify = DB.AuditIssueActivityVerifies.Where(w => w.AuditIssueSubId.Equals(Model.AuditIssueSubId)).OrderBy(w => w.CreateDate).ToList();
+        }
+    }
+}
+
+<div class="row">
+    <div class="col-md-12">
+        @if (Model != null)
+        {
+            <button type="button" class="btn btn-secondary mt-2 mb-2" onclick="AddRowActivityVerify()">
+                <i class="fas fa-plus"></i> เพิ่มรายการ@(Title) (@Model.AuditIssueSubName)
+            </button>
+        }
+        <table class="table table-bordered table-hover" id="AuditIssueActivityVerifyTable">
+            <thead>
+                <tr>
+                    <th>@(Title)</th>
+                    <th width="20%">Action</th>
+                </tr>
+            </thead>
+            <tbody id="AuditIssueActivityVerifyTableBody">
+                @if (_ListAuditIssueActivityVerify != null && _ListAuditIssueActivityVerify.Count > 0)
+                {
+                    int i = 0;
+                    @foreach (AuditIssueActivityVerify item in _ListAuditIssueActivityVerify)
+                    {
+                        i++;
+                        <tr id="rowActivityVerify_@i" class="rowsActivity">
+                            <td>
+                                <input type="text" class="form-control" id="ActivityDetail" name="ActivityDetail" required value="@item.ActivityDetail">
+                                <input type="hidden" id="AuditIssueActivityID" name="AuditIssueActivityID" value="@item.AuditIssueActivityId">
+                                <input type="hidden" id="RowActivityVerify" name="RowActivityVerify" value="@i">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRowActivityVerify(@i, '@item.AuditIssueActivityId')">
+                                    <i class="fas fa-trash"></i> ลบ
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var rowActivityVerify = $('#AuditIssueActivityVerifyTableBody tr').length || 0;
+
+    $('#FormAuditIssueActivityVerify').submit(function (e) {
+        e.preventDefault();
+
+        const _FormData = $(this).serializeFormJSON()
+        if (_FormData.RowActivityVerify == undefined || !_FormData.RowActivityVerify || _FormData.RowActivityVerify == null || _FormData.RowActivityVerify.length == 0) {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเพิ่ม@(Title)' });
+            return
+        }
+
+        // console.log('FormData =>',_FormData)
+        // console.log('RowActivityVerify =>',_FormData.RowActivityVerify?.length)
+        const ListAuditIssueActivityVerify = [];
+        if (_FormData.RowActivityVerify?.length == 1) {
+            const _AuditIssueActivityID = _FormData.AuditIssueActivityID
+            const _ActivityDetail = _FormData.ActivityDetail
+            ListAuditIssueActivityVerify.push({
+                AuditIssueSubID: @Model.AuditIssueSubId,
+                AuditIssueActivityID: _AuditIssueActivityID ? _AuditIssueActivityID : null,
+                ActivityDetail: _ActivityDetail ? _ActivityDetail : '',
+            })
+        } else if (_FormData.RowActivityVerify?.length > 1) {
+             for (let i = 0; i < _FormData.RowActivityVerify?.length; i++) {
+                const _AuditIssueActivityID = _FormData.AuditIssueActivityID[i]
+                const _ActivityDetail = _FormData.ActivityDetail[i]
+                ListAuditIssueActivityVerify.push({
+                    AuditIssueSubID: @Model.AuditIssueSubId,
+                    AuditIssueActivityID: _AuditIssueActivityID ? _AuditIssueActivityID : null,
+                    ActivityDetail: _ActivityDetail ? _ActivityDetail : '',
+                })
+            }
+        }
+     
+        // console.log(ListAuditIssueActivityVerify)
+        // return;
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveAuditIssueActivityVerify", "AuditIssueMain")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(ListAuditIssueActivityVerify),
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                        return
+                    }
+                    Swal.fire({  icon: 'success', title: 'สำเร็จ', text: res.message })
+                    ClearDataActivityVerify();
+                }
+            })
+        })
+    })
+
+    function AddRowActivityVerify() {
+        rowActivityVerify = $('#AuditIssueActivityVerifyTableBody .rowsActivityVerify').length
+        rowActivityVerify++;
+        let html = `
+            <tr id="rowActivityVerify_${rowActivityVerify}" class="rowsActivityVerify">
+                <td>
+                    <input type="text" class="form-control" id="ActivityDetail" name="ActivityDetail" required>
+                    <input type="hidden" class="form-control" id="AuditIssueActivityID" name="AuditIssueActivityID" value="">
+                    <input type="hidden" class="form-control" id="RowActivityVerify" name="RowActivityVerify" value="${rowActivityVerify}">
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRowActivityVerify(${rowActivityVerify})">
+                        <i class="fas fa-trash"></i> ลบ
+                    </button>
+                </td>
+            </tr>
+        `;
+        $('#AuditIssueActivityVerifyTableBody').append(html)
+    }
+
+    function RemoveRowActivityVerify(row, AuditIssueActivityID = '') {
+        if (AuditIssueActivityID == '' || AuditIssueActivityID == null || AuditIssueActivityID == undefined) {
+            $(`#rowActivityVerify_${row}`).remove();
+            RunningRowActivity();
+            return
+        }
+
+        $.ajax({
+            url: '@Url.Action("DeleteAuditIssueActivityVerify", "AuditIssueMain")',
+            type: 'POST',
+            data: { AuditIssueActivityID: AuditIssueActivityID },
+            success: function (res) {
+                if (res.status) {
+                    $(`#rowActivityVerify_${row}`).remove();
+                    RunningRowActivity();
+                }
+            }
+        })
+    }
+
+    function RunningRowActivity() {
+        $('#AuditIssueActivityVerifyTableBody tr').each(function (index) {
+           rowActivityVerify = index + 1
+        })
+    }
+</script>

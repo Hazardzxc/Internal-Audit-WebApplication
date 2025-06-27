@@ -1,0 +1,109 @@
+﻿@model STD.Models.DB.UserAuditor
+@using STD.Models.DB;
+@{
+    Layout = null;
+    ViewData["Title"] = Model == null ? "เพิ่มข้อมูลผู้ตรวจสอบ" : "แก้ไขข้อมูลผู้ตรวจสอบ";
+}
+
+<form id="FormUserAuditor">
+    <div class="row">
+        <div class="col-md-12">
+            @if (Model != null && Model.AuditorId != Guid.Empty)
+            {
+                <input type="hidden" id="AuditorID" name="AuditorID" value="@Model.AuditorId">
+            }
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>รหัสผู้ตรวจสอบ</label>
+                    <input type="text" class="form-control" id="AuditorCode" name="AuditorCode" required value="@(Model != null && !string.IsNullOrEmpty(Model.AuditorCode) ? Model.AuditorCode : "")">
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>ชื่อ</label>
+                            <input type="text" class="form-control" id="FirstName" name="FirstName" required value="@(Model != null && !string.IsNullOrEmpty(Model.FirstName) ? Model.FirstName : "")">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>นามสกุล</label>
+                            <input type="text" class="form-control" id="LastName" name="LastName" required value="@(Model != null && !string.IsNullOrEmpty(Model.LastName) ? Model.LastName : "")">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>อีเมล</label>
+                    <input type="email" class="form-control" id="Email" name="Email" required value="@(Model != null && !string.IsNullOrEmpty(Model.Email) ? Model.Email : "")">
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>บทบาท</label>
+                    <select class="form-control" id="Role" name="Role" required>
+                        <option value="">----- เลือกบทบาท -----</option>
+                        <option value="1" selected="@(Model !=null && Model.Role == 1)">Auditor</option>
+                        <option value="2" selected="@(Model !=null && Model.Role == 2)">Didector</option>
+                        <option value="99" selected="@(Model !=null && Model.Role == 99)">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-12 text-right">
+                <button type="button" class="btn btn-danger" onclick="ClearData()">เคลียร์</button>
+                <button type="submit" class="btn btn-success">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+
+    $('#FormUserAuditor').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveUserAuditor", "UserAuditor")',
+                type: 'POST',
+                data: {
+                    AuditorID: _FormData.AuditorID ?? null,
+                    AuditorCode: _FormData.AuditorCode ?? '',
+                    FirstName: _FormData.FirstName ?? '',
+                    LastName: _FormData.LastName ?? '',
+                    Email: _FormData.Email ?? '',
+                    Role: _FormData.Role ?? 0,
+                },
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message });
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
+                    $('#ContentFormUserAuditor').html('')
+                    LoadDataTable('UserAuditorTable')
+                }
+            })
+        })
+    })
+
+    function ClearData() {
+        $('#FormUserAuditor input,select').val('')
+    }
+
+</script>

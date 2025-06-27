@@ -1,0 +1,153 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = Html.Raw($"ผู้ตรวจสอบ");
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info">
+                <h2 class="card-title mt-1">@ViewData["Title"]</h2>
+            </div>
+            <div class="card-body">
+                <div class="col-md-12 mb-3">
+                    <button type="button" class="btn btn-primary" onclick="OpenModalUserAuditor()">
+                        <i class="fas fa-plus"></i> เพิ่มข้อมูล
+                    </button>
+                </div>
+                <div class="col-md-12 mb-5">
+                    <div id="ContentFormUserAuditor" class="container-fluid"></div>
+                </div>
+                <div class="col-md-12 table-responsive">
+                    <table id="UserAuditorTable" class="table table-bordered table-striped w-100 table-hover"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        $('#UserAuditorTable').DataTable({
+            serverSide: false,
+            bDestroy: true,
+            pageLength: 10,
+            searching: true,
+            info: true,
+            filter: true,
+            lengthMenu: [10, 20, 50, 100, 200, 500, 1000],
+            language: {
+                processing: "กำลังประมวลผล...",
+                loadingRecords: "Loading...",
+                lengthMenu: "แสดง _MENU_ รายการ",
+                search: "ค้นหา :",
+                zeroRecords: "<font color='red'><center>ไม่พบข้อมูลที่คุณต้องการ ค้นหา</center></font>",
+                info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
+                infoEmpty: "แสดง 0 ถึง 0 จากทั้งหมด 0 รายการ",
+                infoFiltered: "(ค้นหา จากทั้งหมด _MAX_ รายการ)",
+                paginate: {
+                    first: "หน้าแรก",
+                    last: "หน้าสุดท้าย",
+                    next: "ถัดไป",
+                    previous: "ก่อนหน้า",
+                },
+            },
+            ajax: {
+                url: '@Url.Action("GetUserAuditor", "UserAuditor")',
+                type: 'GET',
+            },
+            columns: [
+                {
+                    data: null, title: "#", "autoWidth": true, width: "50px",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'auditorCode', name: "auditorCode", title: "รหัสผู้ตรวจสอบ", "autoWidth": true, width: "70px",
+                },
+                {
+                    data: 'firstName', name: "firstName", title: "ชื่อ", "autoWidth": true
+                },
+                {
+                    data: 'lastName', name: "lastName", title: "นามสกุุล", "autoWidth": true
+                },
+                {
+                    data: 'email', name: "email", title: "อีเมล", "autoWidth": true
+                },
+                {
+                    data: 'role', name: "role", title: "บทบาท", "autoWidth": true,
+                    render: function (d) {
+                        return +d === 99 ? "Admin" : +d === 1 ? "Auditor" : +d === 2 ? "Director" : ""
+                    }
+                },
+                {
+                    data: 'auditorId', name: "auditorId", title: "Action", orderable: false, width: "200px",
+                    render: function (d) {
+                        return `
+                            <div class="text-center">
+                                <button class="btn btn-sm btn-info" onclick="OpenModalUserAuditor('${d}')">
+                                    <i class="fas fa-edit"></i> แก้ไข
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="DeleteUserAuditor('${d}')">
+                                    <i class="fas fa-trash"></i> ลบ
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            ],
+            order: [[0, 'asc']]
+        })
+    })
+
+    function OpenModalUserAuditor(AuditorID = '') {
+        $('#ContentFormUserAuditor').html('')
+        $.ajax({
+            url: '@Url.Action("GetAuditorForm", "UserAuditor")?AuditorID=' + AuditorID,
+            type: 'GET',
+            dataType: 'html',
+            success: function (data) {
+                $('#ContentFormUserAuditor').html(data)
+                $('#ModalUserAuditor').modal('show')
+            }
+        })
+    }
+
+    function DeleteUserAuditor(AuditorID) {
+
+        if (AuditorID == '' || AuditorID == null) {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'ไม่พบข้อมูลที่ต้องการลบ' })
+            return
+        }
+
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะลบข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("DeleteUserAuditor", "UserAuditor")',
+                type: 'POST',
+                data: { AuditorID: AuditorID },
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message })
+                    LoadDataTable('UserAuditorTable')
+                }
+            })
+        })
+    }
+
+</script>

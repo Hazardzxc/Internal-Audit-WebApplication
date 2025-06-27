@@ -1,0 +1,33 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@200;300&display=swap');
+@page {
+    size: A4
+}
+
+.sheet {
+    padding: 20mm;
+    background-color: #fafafa;
+}
+
+body {
+    background-color: #fafafa;
+    font-family: 'Sarabun', sans-serif;
+    margin: 0;
+}
+
+h1, p {
+    margin: 0 0 10px;
+}
+
+
+ol {
+    counter-reset: item
+}
+
+li {
+    display: block
+}
+
+    li:before {
+        content: counters(item, ".") " ";
+        counter-increment: item
+    }

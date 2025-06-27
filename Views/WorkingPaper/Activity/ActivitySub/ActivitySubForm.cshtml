@@ -1,0 +1,164 @@
+﻿@model STD.Models.DB.WorkingPaperActivity
+@using STD.Models.DB
+@{
+    string Title = "กิจกรรมการควบคุมย่อย";
+    ViewData["Title"] = $"เพิ่ม/แก้ไขข้อมูล{Title}";
+    Layout = null;
+
+    Guid WorkingPaperActivitySubID = ViewBag.WorkingPaperActivitySubID ?? Guid.Empty;
+    WorkingPaperActivitySub? _ModelSub = null;
+    List<AuditIssueSub> _ListAuditIssueSub = new List<AuditIssueSub>();
+    List<WorkingPaperActivitySub> _ListWorkingPaperActivitySub = new List<WorkingPaperActivitySub>();
+    List<AuditIssueActivityVerify> _ListAuditIssueActivityVerify = new List<AuditIssueActivityVerify>();
+    using (AuditManager_Connect DB = new AuditManager_Connect())
+    {
+        _ListAuditIssueSub = DB.AuditIssueSubs.Where(w => w.AuditIssueSubType.Equals(3)).OrderBy(o => o.CreateDate).ToList();
+        if (Model != null)
+        {
+            _ListWorkingPaperActivitySub = DB.WorkingPaperActivitySubs.Where(w => w.WorkingPaperActivityId.Equals(Model.WorkingPaperActivityId)).OrderBy(o => o.CreateDate).ToList();
+            _ListAuditIssueActivityVerify = DB.AuditIssueActivityVerifies.OrderBy(o => o.CreateDate).ToList();
+        }
+
+        if (WorkingPaperActivitySubID != Guid.Empty)
+        {
+            _ModelSub = DB.WorkingPaperActivitySubs.Where(w => w.WorkingPaperActivitySubId.Equals(WorkingPaperActivitySubID)).FirstOrDefault();
+            if (_ModelSub != null)
+            {
+                _ListAuditIssueActivityVerify = DB.AuditIssueActivityVerifies.Where(w => w.AuditIssueSubId.Equals(_ModelSub.AuditIssueSubId)).OrderBy(o => o.CreateDate).ToList();
+            }
+        }
+    }
+}
+
+@if (_ModelSub != null)
+{
+    <input type="hidden" id="WorkingPaperActivitySubID" name="WorkingPaperActivitySubID" value="@_ModelSub?.WorkingPaperActivitySubId" />
+}
+<input type="hidden" id="WorkingPaperActivityID" name="WorkingPaperActivityID" value="@Model?.WorkingPaperActivityId" />
+<div class="row">
+    <div class="row mb-2 col-md-12">
+        <label class="col-md-3 col-form-label">กิจกรรมการตรวจสอบ :</label>
+        <div class="col-md-7">
+            <select class="form-control" id="SubAuditIssueSubID" name="SubAuditIssueSubID" onchange="GetAuditIssueActivitySub(this.value)" required>
+                <option value="">----- เลือกกิจกรรมการตรวจสอบ -----</option>
+                @foreach (AuditIssueSub item in _ListAuditIssueSub)
+                {
+                    if (_ModelSub != null && _ListWorkingPaperActivitySub.Where(w => w.AuditIssueSubId.Equals(item.AuditIssueSubId) && !w.AuditIssueSubId.Equals(_ModelSub.AuditIssueSubId)).Any())
+                    { continue; }
+                    <option value="@item.AuditIssueSubId" selected="@(_ModelSub != null && _ModelSub.AuditIssueSubId.Equals(item.AuditIssueSubId))">@item.AuditIssueSubName</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="row mb-2 col-md-12">
+        <label class="col-md-3 col-form-label">วิธีการตรวจสอบ :</label>
+        <div class="col-md-7">
+            <select class="form-control select2m" id="SubAuditIssueActivityID" name="SubAuditIssueActivityID">
+                @foreach (AuditIssueActivityVerify item in _ListAuditIssueActivityVerify)
+                {
+                    <option value="@item.AuditIssueActivityId">@item.ActivityDetail</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#SubAuditIssueActivityID').select2({
+            placeholder: '----- เลือกวิธีการตรวจสอบ -----',
+            width: '100%',
+            multiple: true,
+        }).val([]).trigger("change")
+        GetWorkingPaperActivityVerifySub('@(_ModelSub != null ? _ModelSub.WorkingPaperActivitySubId : null)')
+    })
+
+    function GetAuditIssueActivitySub(AuditIssueSubID = 0) {
+        if (AuditIssueSubID == '' || AuditIssueSubID == '0' || AuditIssueSubID == null) return
+        $.ajax({
+            url: '@Url.Action("GetListAuditIssueActivityVerify", "AuditIssueMain")?AuditIssueSubID=' + AuditIssueSubID,
+            type: 'GET',
+            dataTypye: 'json',
+            success: function (res) {
+                if (!res?.status) return
+                $('#SubAuditIssueActivityID').html('')
+                res?.data?.map(v => $('#SubAuditIssueActivityID').append(`<option value="${v.auditIssueActivityId}">${v.activityDetail}</option>`))
+            }
+        })
+    }
+
+    function GetWorkingPaperActivityVerifySub(WorkingPaperActivitySubID = null) {
+        if (WorkingPaperActivitySubID == null || WorkingPaperActivitySubID == '') return
+        $.ajax({
+            url: '@Url.Action("GetListWorkingPaperActivitySubVerify", "WorkingPaper")?WorkingPaperActivitySubID=' + WorkingPaperActivitySubID,
+            type: 'GET',
+            dataTypye: 'json',
+            success: function (res) {
+                if (!res?.status) return
+                $('#SubAuditIssueActivityID').val(res?.data?.map(v => v.auditIssueActivityId)).trigger('change')
+            }
+        })
+    }
+
+    $('#FormWorkingPaperActivitySub').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+
+        if (!_FormData || _FormData == null) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณากรอกข้อมูลให้ครบ' })
+
+        const ListAuditIssueActivityVerifySub = []
+        if (_FormData.SubAuditIssueActivityID && _FormData.SubAuditIssueActivityID != undefined) {
+            if (typeof _FormData.SubAuditIssueActivityID == 'string') {
+                ListAuditIssueActivityVerifySub.push(_FormData.SubAuditIssueActivityID)
+            } else {
+                for (let Item of _FormData.SubAuditIssueActivityID) {
+                    ListAuditIssueActivityVerifySub.push(Item)
+                }
+            }
+        }
+
+        //console.log(ListAuditIssueActivityVerifySub)
+        // debugger
+        // return
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveUpdateWorkingPaperActivitySub", "WorkingPaper")',
+                type: 'POST',
+                data: {
+                    AuditIssueSubID: _FormData.SubAuditIssueSubID,
+                    WorkingPaperActivityID: _FormData.WorkingPaperActivityID,
+                    WorkingPaperActivitySubID: _FormData.WorkingPaperActivitySubID ?? null,
+                    ListAuditIssueActivityVerifySub: ListAuditIssueActivityVerifySub ?? [],
+                },
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                        return
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ',
+                        text: res.message
+                    }).then((result) => {
+                        if (!result.isConfirmed) return;
+                        // window.location.reload()
+                        ClearDataWorkingPaperActivitySub()
+                        GetWorkingPaperActivitySubTable('@Model?.WorkingPaperActivityId')
+                    })
+                }
+            })
+        })
+    })
+
+</script>

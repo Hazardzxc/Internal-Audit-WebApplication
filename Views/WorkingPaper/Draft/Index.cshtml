@@ -1,0 +1,310 @@
+﻿@model STD.Models.DB.AuditManegementSegment
+@using STD.Models.DB
+@{
+    string Title = "กระดาษทำงาน (Working Paper)";
+    Faculty? _Faculty = null;
+    AuditIssueMain? _AuditIssueMain = null;
+    List<AuditManegementSegmentSub>? _ListAuditManegementSegmentSub = new List<AuditManegementSegmentSub>();
+    List<UserAuditor> _ListUserAuditor = new List<UserAuditor>();
+    if (Model != null)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            _Faculty = DB.Faculties.Where(w => w.FacultyId.Equals(Model.FacultyId)).FirstOrDefault();
+            _AuditIssueMain = DB.AuditIssueMains.Where(w => w.AuditIssueMainId.Equals(Model.AuditIssueMainId)).FirstOrDefault();
+            _ListAuditManegementSegmentSub = DB.AuditManegementSegmentSubs.Where(w => w.AuditManegementSegmentId.Equals(Model.AuditManegementSegmentId)).ToList();
+            _ListUserAuditor = DB.UserAuditors.ToList();
+        }
+    }
+}
+
+<style>
+    #FormWorkingPaper ol {
+        counter-reset: item
+    }
+
+    #FormWorkingPaper li {
+        display: block
+    }
+
+        #FormWorkingPaper li:before {
+            content: counters(item, ".") " ";
+            counter-increment: item
+        }
+</style>
+<form id="FormWorkingPaper">
+    <div class="border border-dark">
+        <input type="hidden" id="AuditManegementSegmentID" name="AuditManegementSegmentID" value="@(Model != null ? Model.AuditManegementSegmentId : "")">
+        <div class="row col-md-12">
+            <div class="col-md-2 text-center border-right border-dark p-5">
+                <div>
+                    <img src="~/AdminLTE/dist/img/AdminLTELogo.png" class="img-thumbnail" width="150" height="150" alt="...">
+                </div>
+                <div>
+                    <span>ศูนย์ตรวจสอบภายใน</span>
+                </div>
+                <div>
+                    <span>มหาวิทยาลัยมหิดล</span>
+                </div>
+            </div>
+            <div class="col-md-6 border-right border-dark p-2">
+                <h5 class="text-center">แนวการตรวจสอบ (Audit Program) & กระดาษทำการ (Working Paper)</h5>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">หน่วยรับตรวจ :</label>
+                    <label class="col-md-8 col-form-label">@(_Faculty != null ? _Faculty.FacultyName : "")</label>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">โครงการตรวจลำดับที่ :</label>
+                    <div class="col-md-8">
+                        <input type="number" min="1" class="form-control" id="No" name="No" required />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">เรื่องที่ทำการตรวจสอบ :</label>
+                    <label class="col-md-8 col-form-label">@(_AuditIssueMain != null ? _AuditIssueMain.AuditIssueMainName : "")</label>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ระยะเวลาที่ทำการตรวจสอบ :</label>
+                    <div class="col-md-8">
+                        <input type="text" class="form-control daterange" id="Daterange" name="Daterange" autocomplete="off" required />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้ตรวจสอบ :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="AuditorBy" name="AuditorBy" required>
+                            <option value="">----- เลือกผู้ตรวจสอบ -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้ควบคุมการปฏิบัติงาน :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="OperationsControllerAuditorBy" name="OperationsControllerAuditorBy" required>
+                            <option value="">----- เลือกผู้ควบคุมการปฏิบัติงาน -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mt-2">
+                <div class="row">
+                    <label class="col-md-4 col-form-label">ทบทวนครั้งที่ :</label>
+                    <div class="col-md-8">
+                        <input type="number" min="1" class="form-control" id="ReviewNo" name="ReviewNo" autocomplete="off" required />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-12 col-form-label DateNowTH"></label>
+                </div>
+                <hr style="border-top:1px solid" />
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้จัดทำ :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="ProducerBy" name="ProducerBy" required>
+                            <option value="">----- เลือกผู้จัดทำ -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้สอบทาน :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="ReviewerBy" name="ReviewerBy" required>
+                            <option value="">----- เลือกผู้สอบทาน -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้อนุมัติ :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="ApproveBy" name="ApproveBy" required>
+                            <option value="">----- เลือกผู้อนุมัติ -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <hr style="border-top:1px solid" />
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">วันที่อนุมัติ :</label>
+                    <div class="col-md-8">
+                        <input type="date" class="form-control" id="ApproveDate" name="ApproveDate" required />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-top border-dark mb-2">
+            <div class="row col-md-12">
+                <label class="col-md-2 col-form-label">วัตถุประสงค์ของการตรวจสอบ :</label>
+                <span class="mt-2">เพื่อให้มั่นใจว่า</span>
+            </div>
+            @if (_ListAuditManegementSegmentSub != null && _ListAuditManegementSegmentSub.Count > 0)
+            {
+                <ol>
+                    @foreach (AuditManegementSegmentSub item in _ListAuditManegementSegmentSub.Where(w => w.AuditIssueSubType.Equals(1)).OrderBy(w => w.CreateDate))
+                    {
+                        <li>. @item.AuditIssueSubDetail</li>
+                    }
+                </ol>
+            }
+        </div>
+        <div class="border-top border-dark mb-2">
+            <div class="row col-md-12">
+                <label class="col-form-label ml-3" style="width:3.5rem;">อ้างอิง :</label>
+                @if (_ListAuditManegementSegmentSub != null && _ListAuditManegementSegmentSub.Count > 0)
+                {
+                    <ol style="margin-top:10px;">
+                        @foreach (AuditManegementSegmentSub item in _ListAuditManegementSegmentSub.Where(w => w.AuditIssueSubType.Equals(2)).OrderBy(w => w.CreateDate))
+                        {
+                            <li>. @item.AuditIssueSubDetail</li>
+                        }
+                    </ol>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3 mb-3">
+        <div class="col-md-12 hidden">
+            <button type="button" class="btn btn-primary" disabled="@(Model == null)">เพิ่มข้อมูล</button>
+        </div>
+        <div class="col-md-12 table-responsive" id="WorkingPaperActivityTableData">
+            <table class="table table-bordered table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ลำดับ</th>
+                        <th width="300px">กิจกรรมการควบคุม</th>
+                        <th>วิธีการตรวจสอบ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_ListAuditManegementSegmentSub != null && _ListAuditManegementSegmentSub.Count > 0)
+                    {
+                        int i = 0;
+                        List<AuditManegementSegmentSubVerify> _ListAuditManegementSegmentSubVerify = new List<AuditManegementSegmentSubVerify>();
+                        using (AuditManager_Connect DB = new AuditManager_Connect())
+                        {
+                            foreach (AuditManegementSegmentSub item in _ListAuditManegementSegmentSub.Where(w => w.AuditIssueSubType.Equals(3)).OrderBy(w => w.CreateDate))
+                            {
+                                i++;
+                                _ListAuditManegementSegmentSubVerify = DB.AuditManegementSegmentSubVerifies.Where(w => w.AuditManegementSegmentSubId.Equals(item.AuditManegementSegmentSubId)).OrderBy(o => o.CreateDate).ToList();
+                                <tr>
+                                    <td>@i</td>
+                                    <td>@item.AuditIssueSubDetail</td>
+                                    <td>
+                                        @if (_ListAuditManegementSegmentSubVerify != null && _ListAuditManegementSegmentSubVerify.Count > 0)
+                                        {
+                                            foreach (AuditManegementSegmentSubVerify itemVerify in _ListAuditManegementSegmentSubVerify)
+                                            {
+                                                <span>- @itemVerify.AuditIssueActivityDetail</span>
+                                                <br />
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row mt-3 mb-3">
+        <div class="col-md-12 text-right">
+            <button type="button" class="btn btn-danger" onclick="window.location.href = '@Url.Action("AuditManegementSegment", "SetUpSegmentAudit", new { FacultyID = Model?.FacultyId })'">ย้อนกลับ</button>
+            <button type="submit" class="btn btn-success">บันทึก</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(function () {
+            $('.daterange').daterangepicker({
+                opens: 'left',
+                locale: { cancelLabel: 'Clear', format: 'DD/MM/YYYY' }
+            }, function (start, end, label) {
+                console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+            })
+        })
+        $('#FormWorkingPaper').submit(function (e) {
+            e.preventDefault()
+
+            const _FormData = $(this).serializeFormJSON()
+
+            if (!_FormData || _FormData == null) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณากรอกข้อมูลให้ครบ' })
+
+            const Dates = _FormData.Daterange != null && _FormData.Daterange != '' ? _FormData.Daterange.split(' - ') : []
+            const [SD, SM, SY] = Dates.length > 0 ? Dates[0].split('/') : []
+            const [ED, EM, EY] = Dates.length > 1 ? Dates[1].split('/') : []
+
+            const data = {
+                AuditManegementSegmentID: _FormData.AuditManegementSegmentID != '' ? _FormData.AuditManegementSegmentID : null,
+                No: _FormData.No,
+                ReviewNo: _FormData.ReviewNo,
+                StartDate: `${SY}-${SM}-${SD}`,
+                EndDate: `${EY}-${EM}-${ED}`,
+                AuditorBy: _FormData.AuditorBy,
+                OperationsControllerAuditorBy: _FormData.OperationsControllerAuditorBy,
+                ProducerBy: _FormData.ProducerBy,
+                ReviewerBy: _FormData.ReviewerBy,
+                ApproveBy: _FormData.ApproveBy,
+                ApproveDate: _FormData.ApproveDate,
+            }
+            // debugger
+            // return
+            Swal.fire({
+                title: 'คุณแน่ใจไหม?',
+                text: "คุณจะบันทึกข้อมูล!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#d33',
+                confirmButtonText: "ตกลง",
+                cancelButtonText: "ยกเลิก",
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                $.ajax({
+                    url: '@Url.Action("SaveWorkingPaperForDraft", "WorkingPaper")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        if (!res.status) {
+                            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                            return
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สำเร็จ',
+                            text: res.message
+                        }).then((result) => {
+                           if (!result.isConfirmed) return;
+                           window.location.href = `@Url.Action("GetWorkingPaperForm", "WorkingPaper")?WorkingPaperID=${res?.data?.workingPaperID}&FacultyID=${res?.data?.facultyID}&AuditIssueMainID=${res?.data?.auditIssueMainID}`
+                        })
+                    }
+                })
+            })
+        })
+    </script>
+}

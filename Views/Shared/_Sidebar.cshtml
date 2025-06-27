@@ -1,0 +1,43 @@
+﻿@using STD.Helpers;
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="/" class="brand-link text-center">
+        <span class="brand-text font-weight-light">AuditManager</span>
+    </a>
+    <div class="sidebar">
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Faculty")" class="nav-link @Html.IsActive(controllers: "Faculty", actions: "Index")">
+                        <i class="nav-icon far fa-circle nav-icon"></i>
+                        <p>ส่วนงาน</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+               @*      <a href="@Url.Action("Index", "AuditManagement")" class="nav-link @Html.IsActive(controllers: "AuditManagement", actions: "Index")">
+                        <i class="nav-icon far fa-circle nav-icon"></i>
+                        <p>ประเด็นการตรวจสอบ</p>
+                    </a>
+                </li>   *@
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "WorkingPaper")" class="nav-link @Html.IsActive(controllers: "WorkingPaper", actions: "Index")">
+                        <i class="nav-icon far fa-circle nav-icon"></i>
+                        <p>กระดาษทำการ</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Settings")" class="nav-link @Html.IsActive(controllers: "Settings", actions: "Index")">
+                        <i class="nav-icon far fa-circle nav-icon"></i>
+                        <p>การตั้งค่า</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "SetUpSegmentAudit")" class="nav-link @Html.IsActive(controllers: "SetUpSegmentAudit", actions: "Index")">
+                        <i class="nav-icon far fa-circle nav-icon"></i>
+                        <p>ตั้งค่าการตรวจสอบส่วนงาน</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>

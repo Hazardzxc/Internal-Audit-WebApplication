@@ -1,0 +1,72 @@
+﻿@model STD.Models.DB.AuditManagement
+@using STD.Models.DB;
+@{
+    Layout = null;
+    ViewData["Title"] = Model == null ? "เพิ่มข้อมูลประเดินการตรวจสอบ" : "แก้ไขข้อมูลประเดินการตรวจสอบ";
+
+    List<Faculty> _ListFaculty = new List<Faculty>();
+    using (AuditManager_Connect DB = new AuditManager_Connect())
+    {
+        _ListFaculty = DB.Faculties.ToList();
+    }
+
+    List<AuditIssueMain> _ListAuditIssueMain = new List<AuditIssueMain>();
+    using (AuditManager_Connect DB = new AuditManager_Connect())
+    {
+        _ListAuditIssueMain = DB.AuditIssueMains.ToList();
+    }
+}
+
+<div class="row">
+    @if (Model != null && Model.AuditManagementId > 0)
+    {
+        <input type="hidden" id="AuditManagementID" name="AuditManagementID" value="@Model.AuditManagementId">
+    }
+    <div class="col-md-12">
+        <div class="form-group">
+            <label>ส่วนงาน</label>
+            <select id="FacultyID" name="FacultyID" class="form-control" required>
+                <option value="">-- เลือกส่วนงาน --</option>
+                @foreach (Faculty item in _ListFaculty)
+                {
+                    <option value="@item.FacultyId" selected="@(Model != null && Model.FacultyId == item.FacultyId)">@item.FacultyName</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>ประเด็นการตวจสอบ</label>
+            <select id="AuditIssueMainID" name="AuditIssueMainID" class="form-control _AuditIssueMain" required onchange="GetAuditIssueSub(this.value)">
+                <option value="">-- เลือกประเด็นการตวจสอบ --</option>
+                @if (_ListAuditIssueMain.Count > 0 && _ListAuditIssueMain != null)
+                {
+                    @foreach (AuditIssueMain item in _ListAuditIssueMain)
+                    {
+                        <option value="@item.AuditIssueMainId" selected="@(Model != null && Model.AuditIssueMainId == item.AuditIssueMainId)">@item.AuditIssueMainName</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>วันที่</label>
+            <input type="date" class="form-control" id="AuditStartDate" name="AuditStartDate" required value="@(Model != null && !string.IsNullOrEmpty(Model.AuditStartDate.ToString()) ? Model.AuditStartDate.ToString("yyyy-MM-dd") : "")">
+        </div>
+        <div class="form-group">
+            <label>วันที่เสร็จสิ้น</label>
+            <input type="date" class="form-control" id="AuditEndDate" name="AuditEndDate" required value="@(Model != null && !string.IsNullOrEmpty(Model.AuditEndDate.ToString()) ? Model.AuditEndDate.ToString("yyyy-MM-dd") : "")">
+        </div>
+        <div class="form-group">
+            <label>วัตถุประสงค์</label>
+            <select id="AuditIssueSubID" name="AuditIssueSubID" class="form-control _AuditIssueSub select2m" required>
+                <option value="">-- เลือกวัตถุประสงค์ --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>สถานะ</label>
+            <select id="Status" name="Status" class="form-control" required>
+                <option value="" selected="@(Model == null)">-- เลือกสถานะ --</option>
+                <option value="1" selected="@(Model != null && Model.Status == 1)">รอดำเนินการ</option>
+                <option value="2" selected="@(Model != null && Model.Status == 2)" disabled="@(Model == null)">เสร็จสื้น</option>
+            </select>
+        </div>
+    </div>
+</div>

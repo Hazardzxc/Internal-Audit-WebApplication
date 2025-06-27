@@ -1,0 +1,60 @@
+﻿@using STD.Models.DB;
+@{
+    string Title = "กระดาษทำงาน (Working Paper)";
+    ViewData["Title"] = Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    List<Faculty> _ListFaculty = new List<Faculty>();
+    List<AuditIssueMain> _ListAuditIssueMain = new List<AuditIssueMain>();
+    using (AuditManager_Connect DB = new AuditManager_Connect())
+    {
+        _ListFaculty = DB.Faculties.ToList();
+        _ListAuditIssueMain = DB.AuditIssueMains.ToList();
+    }
+}
+
+<div class="col-md-10">
+    <div class="form-group row">
+        <label class="col-md-3 col-form-label">หน่วยรับตรวจ :</label>
+        <div class="col-md-5">
+            <select class="form-control" id="FacultyID">
+                <option value="">----- เลือกส่วนงาน -----</option>
+                @foreach (Faculty item in _ListFaculty)
+                {
+                    <option value="@item.FacultyId">@item.FacultyName</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-md-3 col-form-label">กรุณาเรื่องที่ทำการตรวจสอบ :</label>
+        <div class="col-md-5">
+            <select class="form-control" id="AuditIssueMainID" disabled>
+                <option value="">----- เลือกเรื่องที่ทำการตรวจสอบ -----</option>
+                @foreach (AuditIssueMain item in _ListAuditIssueMain)
+                {
+                    <option value="@item.AuditIssueMainId">@item.AuditIssueMainName</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-12 text-right">
+            <button type="button" class="btn btn-danger" onclick="window.location.href = '/WorkingPaper'">ย้อนกลับ</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#FacultyID').change(function () {
+                $('#AuditIssueMainID').prop('disabled', $('#FacultyID').val() == '')
+            })
+            $('#AuditIssueMainID').change(function () {
+                if ($('#AuditIssueMainID').val() == '' || $('#FacultyID').val() == '') return
+                window.location.href = `@Url.Action("GetWorkingPaperForm", "WorkingPaper")?FacultyID=${$('#FacultyID').val()}&AuditIssueMainID=${$('#AuditIssueMainID').val()}`
+            })
+        })
+    </script>
+}

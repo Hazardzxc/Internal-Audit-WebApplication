@@ -1,0 +1,73 @@
+﻿@model STD.Models.DB.Faculty
+
+@{
+    Layout = null;
+    ViewData["Title"] = Model == null ? "เพิ่มข้อมูล" : "แก้ไขข้อมูล";
+}
+
+<form id="FormFaculty">
+    <div class="row">
+        @if (Model != null && Model.FacultyId > 0)
+        {
+            <input type="hidden" id="FacultyID" name="FacultyID" value="@Model.FacultyId">
+        }
+        <div class="col-md-12">
+            <div class="form-group">
+                <label>รหัสส่วนงาน</label>
+                <input type="text" class="form-control" id="FacultyCode" name="FacultyCode" required value="@(Model != null && !string.IsNullOrEmpty(Model.FacultyCode) ? Model.FacultyCode : "")">
+            </div>
+            <div class="form-group">
+                <label>ชื่อส่วนงาน</label>
+                <input type="text" class="form-control" id="FacultyName" name="FacultyName" required value="@(Model != null && !string.IsNullOrEmpty(Model.FacultyName) ? Model.FacultyName : "")">
+            </div>
+        </div>
+        <div class="col-md-12 text-right">
+            <button type="button" class="btn btn-danger" onclick="ClearData()">เคลียร์</button>
+            <button type="submit" class="btn btn-success">บันทึก</button>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $('#FormFaculty').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveFaculty", "Faculty")',
+                type: 'POST',
+                data: {
+                    FacultyID: _FormData.FacultyID ?? 0,
+                    FacultyName: _FormData.FacultyName,
+                    FacultyCode: _FormData.FacultyCode,
+                },
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message });
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
+                    $('#ContentFormFaculty').html('')
+                    LoadDataTable('FacultyTable')
+                }
+            })
+        })
+    })
+
+    function ClearData() {
+        $('#FormFaculty input,select').val('')
+    }
+</script>

@@ -1,0 +1,138 @@
+﻿@model STD.Models.DB.AuditManagement
+@using STD.Models.DB;
+@using System.Text
+@{
+    ViewData["Title"] = "";
+    Faculty? _Faculty = null;
+    AuditIssueMain? _AuditIssueMain = null;
+    List<AuditManagementSub> _ListAuditManagementSub = new List<AuditManagementSub>();
+    StringBuilder _AuditIssueSubName = new StringBuilder();
+    if (Model != null)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            if (Model.FacultyId > 0) _Faculty = DB.Faculties.Where(w => w.FacultyId.Equals(Model.FacultyId)).FirstOrDefault();
+            if (Model.AuditIssueMainId > 0) _AuditIssueMain = DB.AuditIssueMains.Where(w => w.AuditIssueMainId.Equals(Model.AuditIssueMainId)).FirstOrDefault();
+            _ListAuditManagementSub = DB.AuditManagementSubs.Where(w => w.AuditManagementId.Equals(Model.AuditManagementId)).ToList();
+        }
+
+        ViewData["Bar"] = _Faculty != null && _AuditIssueMain != null ? Html.Raw($"<a href='{Url.Action("Index", "Faculty")}'>ส่วนงาน</a> > <a href='{Url.Action("Index", "AuditManagement")}?FacultyID={_Faculty.FacultyId}'>{_Faculty.FacultyName}</a> > {_AuditIssueMain.AuditIssueMainName}") : "";
+    }
+
+    if (_ListAuditManagementSub != null && _ListAuditManagementSub.Count > 0)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            int row = 0;
+            foreach (AuditManagementSub Item in _ListAuditManagementSub)
+            {
+                AuditIssueSub? _Obj = DB.AuditIssueSubs.Where(w => w.AuditIssueSubId.Equals(Item.AuditIssueSubId)).FirstOrDefault();
+                if (_Obj == null) continue;
+                row++;
+                _AuditIssueSubName.Append($"{row}. {_Obj.AuditIssueSubName} \n");
+            }
+        }
+    }
+}
+
+<div class="row">
+    @if (Model != null)
+    {
+        <div class="col-md-12">
+            <input type="hidden" id="AuditManagementID" value="@Model.AuditManagementId" />
+            <div class="card">
+                <div class="card-body">
+                    <div class="col-md-12">
+                        <h5 class="text-primary">ประเด็นการตรวจสอบ :</h5>
+                        <p>@(_AuditIssueMain != null && !string.IsNullOrEmpty(_AuditIssueMain.AuditIssueMainName) ? _AuditIssueMain.AuditIssueMainName : "")</p>
+                    </div>
+                    <div class="col-md-12">
+                        <h5 class="text-primary">วัตถุประสงค์ :</h5>
+                        <p>@(!string.IsNullOrEmpty(_AuditIssueSubName.ToString()) ? _AuditIssueSubName.ToString() : "")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active text-primary" id="Home-tab" data-toggle="tab" data-target="#Home" type="button" role="tab" aria-controls="Home" aria-selected="true">ปฏิทินงานตรวจสอบ</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-primary" id="RoutingSlip-tab" data-toggle="tab" data-target="#RoutingSlip" type="button" role="tab" aria-controls="RoutingSlip" aria-selected="false" onclick="GetPageView(`#RoutingSlip`)">Routing Slip</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-primary" id="Contact-tab" data-toggle="tab" data-target="#Contact" type="button" role="tab" aria-controls="Contact" aria-selected="false">การติดตามผล</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-primary" id="Schedule-tab" data-toggle="tab" data-target="#Schedule" type="button" role="tab" aria-controls="Schedule" aria-selected="false" onclick="GetPageView(`#Schedule`)">Schedule</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-primary" id="EngagementPlan-tab" data-toggle="tab" data-target="#EngagementPlan" type="button" role="tab" aria-controls="EngagementPlan" aria-selected="false" onclick="GetPageView(`#EngagementPlan`)">Engagement Plan</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-primary" id="WorkingPaper-tab" data-toggle="tab" data-target="#WorkingPaper" type="button" role="tab" aria-controls="WorkingPaper" aria-selected="false">Working Paper</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-primary" id="Report-tab" data-toggle="tab" data-target="#Report" type="button" role="tab" aria-controls="Report" aria-selected="false">รายงานผลการตรวจสอบ</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="Home" role="tabpanel" aria-labelledby="Home-tab">ปฏิทินงานตรวจสอบ</div>
+                        <div class="tab-pane fade mt-2" id="RoutingSlip" role="tabpanel" aria-labelledby="RoutingSlip-tab">RoutingSlip</div>
+                        <div class="tab-pane fade mt-2" id="Contact" role="tabpanel" aria-labelledby="Contact-tab">การติดตามผล</div>
+                        <div class="tab-pane fade mt-2" id="Schedule" role="tabpanel" aria-labelledby="Schedule-tab">Schedule</div>
+                        <div class="tab-pane fade mt-2" id="EngagementPlan" role="tabpanel" aria-labelledby="EngagementPlan-tab">EngagementPlan</div>
+                        <div class="tab-pane fade mt-2" id="WorkingPaper" role="tabpanel" aria-labelledby="WorkingPaper-tab">WorkingPaper</div>
+                        <div class="tab-pane fade mt-2" id="Report" role="tabpanel" aria-labelledby="Report-tab">รายงานผลการตรวจสอบ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <h3 class="text-dander">ไม่พบข้อมูล</h3>
+    }
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        let AuditManagementID = @(Model != null ? Model.AuditManagementId : 0)
+        $(document).ready(function () { })
+
+        function GetPageView(TabID = '') {
+            let url = ''
+            switch(TabID) {
+                case '#RoutingSlip':
+                    url = `/RoutingSlip/Index?AuditManagementID=${AuditManagementID}`
+                    break
+                case '#Schedule':
+                    url = `/Schedule/Index?AuditManagementID=${AuditManagementID}`
+                    break
+                case '#EngagementPlan':
+                    url = `/EngagementPlan/Index?AuditManagementID=${AuditManagementID}`
+                    break
+                default:
+                    window.location.reload()
+                    break
+            }
+
+            if (url == '') return
+            $('#RoutingSlip').html('')
+            $('#Schedule').html('')
+            $('#EngagementPlan').html('')
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'html',
+                success: function (res) {
+                    $(TabID).html(res);
+                }
+            });
+        }
+    </script>
+}

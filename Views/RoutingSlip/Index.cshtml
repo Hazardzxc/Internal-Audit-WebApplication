@@ -1,0 +1,211 @@
+﻿@using STD.Models.DB;
+@{
+
+    //RoutingSlip
+    Layout = null;
+    ViewData["Title"] = "RoutingSlip";
+    int AuditManagementID = ViewBag.AuditManagementID ?? 0;
+}
+
+<div class="row">
+    <div class="col-md-12 mb-3">
+        <button type="button" class="btn btn-primary" onclick="openModalRoutingSlip()">
+            <i class="fas fa-plus"></i> เพิ่มข้อมูล
+        </button>
+    </div>
+    <div class="col-md-12 table-responsive">
+        <table id="RoutingSlipTable" class="table table-bordered table-striped table-hover" style="width:100%"></table>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalRoutingSlip" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">RoutingSlip</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="clearData()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="FormRoutingSlip">
+                <div class="modal-body">
+                    <div id="ContentRoutingSlip" class="container-fluid"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearData()">ปิดหน้าต่าง</button>
+                    <button type="submit" id="SaveRoutingSlip" class="btn btn-success">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#RoutingSlipTable').DataTable({
+            serverSide: false,
+            bDestroy: true,
+            pageLength: 10,
+            searching: true,
+            info: true,
+            filter: true,
+            responsive: true,
+            lengthMenu: [10, 20, 50, 100, 200, 500, 1000],
+            language: {
+                processing: "กำลังประมวลผล...",
+                loadingRecords: "Loading...",
+                lengthMenu: "แสดง _MENU_ รายการ",
+                search: "ค้นหา :",
+                zeroRecords: "<font color='red'><center>ไม่พบข้อมูลที่คุณต้องการ ค้นหา</center></font>",
+                info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
+                infoEmpty: "แสดง 0 ถึง 0 จากทั้งหมด 0 รายการ",
+                infoFiltered: "(ค้นหา จากทั้งหมด _MAX_ รายการ)",
+                paginate: {
+                    first: "หน้าแรก",
+                    last: "หน้าสุดท้าย",
+                    next: "ถัดไป",
+                    previous: "ก่อนหน้า",
+                },
+            },
+            ajax: {
+                url: '@Url.Action("GetRoutingSlip", "RoutingSlip")',
+                type: 'POST',
+                data: { AuditManagementID: '@AuditManagementID' }
+            },
+            columns: [
+                {
+                    data: null, title: "#", "autoWidth": true, width: "50px",
+                    render: function (d, t, r, m) {
+                        return m.row + 1;
+                    }
+                },
+                {
+                    data: 'routingSlipDetail', name: "routingSlipDetail", title: "รายละเอียด", "autoWidth": true,
+                },
+                {
+                    data: 'auditPlan', name: "auditPlan", title: "แผนการตรวจสอบ", "autoWidth": true,
+                },
+                {
+                    data: 'practicality', name: "practicality", title: "ปฏิบัติการจริง", "autoWidth": true,
+                },
+                {
+                    data: 'comment', name: "comment", title: "หมายเหตุ", "autoWidth": true,
+                },
+                {
+                    data: 'routingSlipID', name: "routingSlipID", title: "Action", orderable: false, width: "200px",
+                    render: function (d, t, r) {
+                        return `
+                            <div class="text-center">
+                                <button class="btn btn-sm btn-info" onclick="openModalRoutingSlip(${d})">
+                                    <i class="fas fa-edit"></i> แก้ไข
+                                </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteRoutingSlip(${d})">
+                                    <i class="fas fa-trash"></i> ลบ
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            ],
+            order: [[0, 'asc']]
+        })
+    })
+
+     $('#FormRoutingSlip').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+        const _Data = {
+            RoutingSlipID: _FormData.RoutingSlipID ? _FormData.RoutingSlipID : 0,
+            AuditManagementID: @AuditManagementID,
+            AuditPlan: _FormData.AuditPlan ? _FormData.AuditPlan : '',
+            RoutingSlipDetail: _FormData.RoutingSlipDetail ? _FormData.RoutingSlipDetail : '',
+            Practicality: _FormData.Practicality ? _FormData.Practicality : '',
+            Comment: _FormData.Comment ? _FormData.Comment : '',
+        }
+
+        // console.log(_Data)
+        // return;
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveRoutingSlip", "RoutingSlip")',
+                type: 'POST',
+                data: _Data,
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message });
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
+                    LoadDataTable('RoutingSlipTable');
+                    clearData();
+                }
+            });
+        })
+    })
+
+    function openModalRoutingSlip(RoutingSlipID = 0) {
+        $('#ContentRoutingSlip').html('')
+        $.ajax({
+            url: '@Url.Action("GetRoutingSlipForm", "RoutingSlip")?RoutingSlipID=' + RoutingSlipID,
+            type: 'GET',
+            dataType: 'html',
+            success: function (res) {
+                $('#ContentRoutingSlip').html(res)
+                $('#ModalRoutingSlip').modal('show')
+            }
+        })
+    }
+
+    function deleteRoutingSlip(RoutingSlipID = 0) {
+        if (RoutingSlipID == '' || RoutingSlipID <= '0') {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'ไม่พบข้อมูลที่ต้องการลบ' })
+            return
+        }
+
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะลบข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("DeleteRoutingSlip", "RoutingSlip")',
+                type: 'POST',
+                data: { RoutingSlipID: RoutingSlipID },
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                        return
+                    }
+                    Swal.fire({  icon: 'success', title: 'สำเร็จ', text: res.message })
+                    LoadDataTable('RoutingSlipTable')
+                }
+            })
+        })
+    }
+
+    function clearData(){
+        $('._Auditor').html('')
+        $('#ModalRoutingSlip').modal('hide')
+        $('#ContentRoutingSlip').html('')
+        $('#FormRoutingSlip')[0].reset()
+    }
+</script>

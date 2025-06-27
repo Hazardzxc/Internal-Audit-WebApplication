@@ -1,0 +1,381 @@
+﻿@using STD.Models.DB
+@{
+    Layout = null;
+    List<AuditIssueMain> _ListAuditIssueMain = new List<AuditIssueMain>();
+    using (AuditManager_Connect DB = new AuditManager_Connect())
+    {
+        _ListAuditIssueMain = DB.AuditIssueMains.ToList();
+    }
+}
+
+<form id="FormAddAuditManegementSegment">
+    <div class="col-md-12 hidden">
+        <button type="button" class="btn btn-secondary mt-2 mb-2" onclick="AddRow()">
+            เพิ่มรายการข้อมูล
+        </button>
+    </div>
+    <div id="ContentsForm"></div>
+    <div class="col-md-12 text-right mb-3">
+        <button type="submit" class="btn btn-success">บันทึก</button>
+    </div>
+</form>
+
+@* <div class="card-body" id="ContentBody_${row}">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active text-primary" id="type1-tab" data-toggle="tab" data-target="#type1" type="button" role="tab" aria-controls="type1" aria-selected="true">วัตถุประสงค์</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-primary" id="type2-tab" data-toggle="tab" data-target="#type2" type="button" role="tab" aria-controls="type2" aria-selected="false">อ้างอิง</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-primary" id="type3-tab" data-toggle="tab" data-target="#type3" type="button" role="tab" aria-controls="type3" aria-selected="false">กิจกรรมการควบคุม</button>
+        </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade mt-2 show active" id="type1" role="tabpanel" aria-labelledby="type1-tab">
+            <div class="col-md-12" id="Title_1_${row}">
+                <div class="card border-primary shadow">
+                    <div class="card-body">
+                        <h6 class="font-weight-bold">วัตถุประสงค์</h6>
+                        <div class="ml-3" id="SubType_1_${row}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade mt-2" id="type2" role="tabpanel" aria-labelledby="type2-tab">
+            <div class="col-md-12" id="Title_2_${row}">
+                <div class="card border-info shadow">
+                    <div class="card-body">
+                        <h6 class="font-weight-bold">อ้างอิง</h6>
+                        <div class="ml-3" id="SubType_2_${row}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade mt-2" id="type3" role="tabpanel" aria-labelledby="type3-tab">
+            <div class="col-md-12" id="Title_3_${row}">
+                <div class="card border-warning shadow">
+                    <div class="card-body">
+                        <h6 class="font-weight-bold">กิจกรรมการควบคุม</h6>
+                        <div class="ml-3">
+                            <div id="SubType_3_${row}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+ *@
+<script type="text/javascript">
+    var row = $('#FormAddAuditManegementSegment .rows').length || 0;
+    $(document).ready(function () {
+        AddRow()
+    })
+    $('#FormAddAuditManegementSegment').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+        if (_FormData == null) return
+
+        let _Row = _FormData.Row ?? undefined
+        if (!_Row) {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเพิ่มรายการข้อมูล' })
+            return
+        }
+        let _Data = {}
+        let _ListAuditIssueMainID = []
+        if (typeof _Row === 'string') {
+            let _AuditIssueSubType1 = _FormData[`AuditIssueSubType1[${_Row}]`] ?? []
+            let _AuditIssueSubType2 = _FormData[`AuditIssueSubType2[${_Row}]`] ?? []
+            let _AuditIssueSubType3 = _FormData[`AuditIssueSubType3[${_Row}]`] ?? []
+            _Data = {
+                FacultyID: @ViewBag.FacultyID,
+                AuditManegementSegmentID: _FormData.AuditManegementSegmentID ?? '',
+                Items: [
+                    {
+                        AuditIssueMainID: +_FormData[`AuditIssueMainID[${_Row}]`] ?? 0,
+                        AuditManegementSegmentID: _FormData.AuditManegementSegmentID ?? '',
+                        ListAuditManegementSegmentSub: [
+                            ...typeof _AuditIssueSubType1 === 'string' ? [_AuditIssueSubType1] : _AuditIssueSubType1,
+                            ...typeof _AuditIssueSubType2 === 'string' ? [_AuditIssueSubType2] : _AuditIssueSubType2,
+                            ...typeof _AuditIssueSubType3 === 'string' ? [_AuditIssueSubType3] : _AuditIssueSubType3,
+                        ].flatMap((val) => {
+                            let _ActivityVerify = _FormData[`ActivityVerify[${_Row}][${val}]`] ?? []
+                            return {
+                                AuditIssueSubID: +val,
+                                ListActivityVerify: [...typeof _ActivityVerify === 'string' ? [_ActivityVerify] : _ActivityVerify]
+                            }
+                        }),
+                    }
+                ]
+            }
+        } else {
+            let _Items = []
+            for (let row of _Row) {
+                let _AuditIssueSubType1 = _FormData[`AuditIssueSubType1[${row}]`] ?? []
+                let _AuditIssueSubType2 = _FormData[`AuditIssueSubType2[${row}]`] ?? []
+                let _AuditIssueSubType3 = _FormData[`AuditIssueSubType3[${row}]`] ?? []
+                _ListAuditIssueMainID.push(+_FormData[`AuditIssueMainID[${row}]`] ?? 0)
+                _Items.push({
+                    AuditIssueMainID: +_FormData[`AuditIssueMainID[${row}]`] ?? 0,
+                    AuditManegementSegmentID: _FormData.AuditManegementSegmentID ?? '',
+                    ListAuditManegementSegmentSub: [
+                        ...typeof _AuditIssueSubType1 === 'string' ? [_AuditIssueSubType1] : _AuditIssueSubType1,
+                        ...typeof _AuditIssueSubType2 === 'string' ? [_AuditIssueSubType2] : _AuditIssueSubType2,
+                        ...typeof _AuditIssueSubType3 === 'string' ? [_AuditIssueSubType3] : _AuditIssueSubType3,
+                    ].flatMap((val, i) => {
+                        let _ActivityVerify = _FormData[`ActivityVerify[${row}][${val}]`] ?? []
+                        return {
+                            AuditIssueSubID: +val,
+                            ListActivityVerify: [...typeof _ActivityVerify === 'string' ? [_ActivityVerify] : _ActivityVerify]
+                        }
+                    }),
+                })
+            }
+            _Data = {
+                AuditManegementSegmentID: _FormData.AuditManegementSegmentID ?? '',
+                FacultyID: @ViewBag.FacultyID,
+                Items: _Items
+            }
+        }
+
+        if (_Data.Items?.length <= 0) {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเพิ่มรายการข้อมูล' });
+            return
+        }
+
+        let _RowCheck = 0
+        for (let Item of _Data.Items) {
+            _RowCheck++
+            if (_ListAuditIssueMainID.filter((val) => val == Item.AuditIssueMainID).length > 1) {
+                Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: `แถวที่ ${_RowCheck} มีรายการซ้ํา` })
+                return
+            }
+
+            if (Item.ListAuditManegementSegmentSub?.length <= 0) {
+                Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: `แถวที่ ${_RowCheck} กรุณาเพิ่มรายการข้อมูล` })
+                return
+            }
+        }
+
+        // console.log(_Data)
+        // return;
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveAuditManegementSegment", "SetUpSegmentAudit")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(_Data),
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message });
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
+                    LoadDataTable('AuditManegementSegmentTable')
+                    ClearData()
+                }
+            })
+        })
+    })
+
+    function AddRow() {
+        row++;
+        if (row > 1) return
+        let _HTML = `
+            <div class="rows" id="row_${row}">
+                <input type="hidden" class="form-control" id="Row" name="Row" value="${row}">
+                <div class="col-md-12">
+                    <div class="col-md-5 mt-3">
+                        <div class="form-group row hidden">
+                            <label class="col-md-5 col-form-label">ประเด็นการตวจสอบ</label>
+                            <div class="col-md-5">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRow(${row})"><i class="fas fa-trash"></i> ลบ</button>
+                            </div>
+                        </div>
+                        <select class="form-control AuditIssueMainID_${row}" id="AuditIssueMainID" name="AuditIssueMainID[${row}]" onchange="GetAuditIssueMain(${row},this.value)" required>
+                            <option value="">----- เลือกประเด็นการตวจสอบ -----</option>
+                            @foreach (AuditIssueMain item in _ListAuditIssueMain)
+                            {
+                                <option value="@item.AuditIssueMainId">@item.AuditIssueMainName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="card-body" id="ContentBody_${row}">
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active text-primary" id="type1-tab-${row}" data-toggle="tab" data-target="#type1-${row}" type="button" role="tab" aria-controls="type1-${row}" aria-selected="true">วัตถุประสงค์</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-primary" id="type2-tab-${row}" data-toggle="tab" data-target="#type2-${row}" type="button" role="tab" aria-controls="type2-${row}" aria-selected="false">อ้างอิง</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-primary" id="type3-tab-${row}" data-toggle="tab" data-target="#type3-${row}" type="button" role="tab" aria-controls="type3-${row}" aria-selected="false">กิจกรรมการควบคุม</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade mt-2 show active" id="type1-${row}" role="tabpanel" aria-labelledby="type1-tab-${row}">
+                                <div class="col-md-12" id="Title_1_${row}">
+                                    <div class="card border-primary shadow">
+                                        <div class="card-body">
+                                            <h6 class="font-weight-bold">วัตถุประสงค์</h6>
+                                            <div class="ml-3 content-type-scroll" id="SubType_1_${row}">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade mt-2" id="type2-${row}" role="tabpanel" aria-labelledby="type2-tab-${row}">
+                                <div class="col-md-12" id="Title_2_${row}">
+                                    <div class="card border-info shadow">
+                                        <div class="card-body">
+                                            <h6 class="font-weight-bold">อ้างอิง</h6>
+                                            <div class="ml-3 content-type-scroll" id="SubType_2_${row}">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade mt-2" id="type3-${row}" role="tabpanel" aria-labelledby="type3-tab-${row}">
+                                <div class="col-md-12" id="Title_3_${row}">
+                                    <div class="card border-warning shadow">
+                                        <div class="card-body">
+                                            <h6 class="font-weight-bold">กิจกรรมการควบคุม</h6>
+                                            <div class="ml-3 content-type-scroll">
+                                                <div id="SubType_3_${row}">
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        $('#ContentsForm').append(_HTML);
+        // $(`#row_${row} #ContentBody_${row} #Title_1_${row}`).hide();
+        // $(`#row_${row} #ContentBody_${row} #Title_2_${row}`).hide();
+        // $(`#row_${row} #ContentBody_${row} #Title_3_${row}`).hide();
+    }
+
+    function RemoveRow(Row, AuditManegementSegmentID = 0) {
+        return
+        if (AuditManegementSegmentID <= 0 || !AuditManegementSegmentID || AuditManegementSegmentID == undefined) {
+            $(`#row_${Row}`).remove();
+            //RunningRow();
+            return
+        }
+
+        $.ajax({
+            url: '@Url.Action("DeleteAuditIssueSub", "AuditIssueMain")',
+            type: 'POST',
+            data: { AuditIssueSubID: AuditIssueSubID },
+            success: function (res) {
+                if (res.status) {
+                    $(`#row_${Row}`).remove();
+                    //RunningRow();
+                }
+            }
+        })
+    }
+
+    function RunningRow() {
+        $('#FormAddAuditManegementSegment .rows').each(function (index) {
+            row = index + 1
+        })
+    }
+
+    function GetAuditIssueMain(Row, AuditIssueMainID) {
+        if (AuditIssueMainID <= 0 || !AuditIssueMainID || AuditIssueMainID == undefined) {
+            //$(`#row_${Row}`).remove();
+            $(`#row_${row} #ContentBody_${row} #SubType_1_${row}`).html('');
+            $(`#row_${row} #ContentBody_${row} #SubType_2_${row}`).html('');
+            $(`#row_${row} #ContentBody_${row} #SubType_3_${row}`).html('');
+            return
+        }
+        $(`#row_${row} #ContentBody_${row} #SubType_1_${row}`).html('');
+        $(`#row_${row} #ContentBody_${row} #SubType_2_${row}`).html('');
+        $(`#row_${row} #ContentBody_${row} #SubType_3_${row}`).html('');
+        // $(`#row_${Row} #ContentBody_${Row} #Title_1_${Row}`).hide();
+        // $(`#row_${Row} #ContentBody_${Row} #Title_2_${Row}`).hide();
+        // $(`#row_${Row} #ContentBody_${Row} #Title_3_${Row}`).hide();
+        $.ajax({
+            url: '@Url.Action("GetAuditIssueSubByAuditIssueMain", "AuditIssueMain")?AuditIssueMainID=' + AuditIssueMainID,
+            type: 'GET',
+            dataType: 'json',
+            success: function (res) {
+                if (!res.status) return
+                // $(`#row_${Row} #ContentBody_${Row} #SubType_1_${Row}`).html('');
+                // $(`#row_${Row} #ContentBody_${Row} #SubType_2_${Row}`).html('');
+                // $(`#row_${Row} #ContentBody_${Row} #SubType_3_${Row}`).html('');
+                let _ListVerify = []
+                res?.data?.forEach((val, i) => {
+                    switch (val.auditIssueSubType) {
+                        case 1:
+                            $(`#row_${Row} #ContentBody_${Row} #SubType_1_${Row}`).append(`<input type="checkbox" id="AuditIssueSubType_${i}" name="AuditIssueSubType1[${Row}]" value="${val.auditIssueSubID}"> <label class="font-weight-normal">${val.auditIssueSubName}</label><br>`)
+                            break
+                        case 2:
+                            $(`#row_${Row} #ContentBody_${Row} #SubType_2_${Row}`).append(`<input type="checkbox" id="AuditIssueSubType_${i}" name="AuditIssueSubType2[${Row}]" value="${val.auditIssueSubID}"> <label class="font-weight-normal">${val.auditIssueSubName}</label><br>`)
+                            break
+                        case 3:
+                            //disabled
+                            let _ItemCheck = val?.listAuditIssueActivityVerify && val?.listAuditIssueActivityVerify?.length > 0
+                            let _HTML4 = `
+                                <div class="ml-3" id="Title_4_${Row}">
+                                    <h6 class="font-weight-bold">วิธีการตรวจสอบ</h6>
+                                    <div class="ml-3" id="SubType_4_${Row}">
+                                          ${_ItemCheck ? val?.listAuditIssueActivityVerify?.map((val2, i2) => {
+                                             return `<input type="checkbox" id="ActivityVerify_${i}_${i2}" disabled class="Check_${val2.auditIssueSubId}" name="ActivityVerify[${Row}][${val2.auditIssueSubId}]" value="${val2.auditIssueActivityId}"> <label class="font-weight-normal">${val2.activityDetail}</label><br>`
+                                          }).join("") : ""}
+                                    </div>
+                                </div>
+                            `
+                            $(`#row_${Row} #ContentBody_${Row} #SubType_3_${Row}`).append(`
+                                <input type="checkbox" id="AuditIssueSubType_${i}" onchange="CheckAllDisabled(${Row}, this.checked, ${val.auditIssueSubID})" name="AuditIssueSubType3[${Row}]" value="${val.auditIssueSubID}"> <label class="font-weight-normal">${val.auditIssueSubName}</label><br>
+                                ${_ItemCheck ? _HTML4 : ""}
+                            `)
+                            break
+                    }
+                })
+                // if (res?.data?.filter(x => x.auditIssueSubType === 1)?.length > 0) {
+                //     $(`#row_${Row} #ContentBody_${Row} #Title_1_${Row}`).show();
+                // }
+                // if (res?.data?.filter(x => x.auditIssueSubType === 2)?.length > 0) {
+                //     $(`#row_${Row} #ContentBody_${Row} #Title_2_${Row}`).show();
+                // }
+                // if (res?.data?.filter(x => x.auditIssueSubType === 3)?.length > 0) {
+                //     $(`#row_${Row} #ContentBody_${Row} #Title_3_${Row}`).show();
+                // }
+            }
+        })
+    }
+
+    function CheckAllDisabled(Row, Checked, Val) {
+        let $checkbox = $(`#row_${Row} #ContentBody_${Row} #SubType_4_${Row} .Check_${Val}`);
+        $checkbox.prop('disabled', !Checked).prop('checked', Checked ? $checkbox.prop('checked') : false);
+    }
+
+    function ClearData() {
+        $('#Content').html('')
+    }
+</script>

@@ -1,0 +1,210 @@
+﻿@model STD.Models.DB.AuditManegementSegment
+@using STD.Models.DB
+@{
+    Layout = null;
+    List<AuditIssueMain> _ListAuditIssueMain = new List<AuditIssueMain>();
+    Faculty? _Faculty = null;
+    WorkingPaper? _WorkingPaper = null;
+    using (AuditManager_Connect DB = new AuditManager_Connect())
+    {
+        _ListAuditIssueMain = DB.AuditIssueMains.ToList();
+    }
+
+    if (Model != null)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            _Faculty = DB.Faculties.Where(w => w.FacultyId.Equals(Model.FacultyId)).FirstOrDefault();
+            _WorkingPaper = DB.WorkingPapers.Where(w => w.AuditManegementSegmentId.Equals(Model.AuditManegementSegmentId)).FirstOrDefault();
+        }
+    }
+}
+
+<form id="FormEditAuditManegementSegment">
+    <div class="row">
+        <div class="col-md-12">
+            @* <label>ชื่อส่วนงาน : @(_Faculty != null ? _Faculty.FacultyName : "")</label> *@
+            <input type="hidden" id="AuditManegementSegmentID" name="AuditManegementSegmentID" value="@(Model != null ? Model.AuditManegementSegmentId : "")" />
+            <input type="hidden" id="FacultyID" name="FacultyID" value="@(Model != null ? Model.FacultyId : "")" />
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>วันที่</label>
+                <input type="date" class="form-control" id="StartDate" name="StartDate" value="@(Model != null && Model.StartDate.HasValue ? Model.StartDate.Value.ToString("yyyy-MM-dd") : "")">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>วันที่เสร็จสิ้น</label>
+                <input type="date" class="form-control" id="EndDate" name="EndDate" value="@(Model != null && Model.EndDate.HasValue ? Model.EndDate.Value.ToString("yyyy-MM-dd") : "")">
+            </div>
+        </div>
+        <div class="col-md-5 mt-2">
+            <label>ประเด็นการตวจสอบ</label>
+            <select class="form-control" id="AuditIssueMainID" @(_WorkingPaper != null ? "disabled" : "") name="AuditIssueMainID" onchange="@(_WorkingPaper != null ? "" : "GetPageSetupSegmentDetail(this.value)")" required>
+                <option value="">----- เลือกประเด็นการตวจสอบ -----</option>
+                @using (AuditManager_Connect DB = new AuditManager_Connect())
+                {
+                    foreach (AuditIssueMain Item in _ListAuditIssueMain)
+                    {
+                        if (Model != null && DB.AuditManegementSegments.Where(w => w.AuditIssueMainId.Equals(Item.AuditIssueMainId) && !w.AuditIssueMainId.Equals(Model.AuditIssueMainId)).Any())
+                        { continue; }
+                        <option value="@Item.AuditIssueMainId" selected="@(Model != null && Model.AuditIssueMainId == Item.AuditIssueMainId)">@Item.AuditIssueMainName</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+    <div id="ContentsForm"></div>
+    <div class="col-md-12 text-right mb-3">
+        <button type="submit" class="btn btn-success">บันทึก</button>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        GetPageSetupSegmentDetail($("#AuditIssueMainID").val());
+    })
+
+    $('#FormEditAuditManegementSegment').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+        if (_FormData == null) return
+
+        let _ListAuditIssueMainID = []
+        let _AuditIssueSubType1 = _FormData.AuditIssueSubType1 ?? undefined
+        let _AuditIssueSubType2 = _FormData.AuditIssueSubType2 ?? undefined
+        let _AuditIssueSubType3 = _FormData.AuditIssueSubType3 ?? undefined
+
+        if (!_AuditIssueSubType3 && !_AuditIssueSubType2 && !_AuditIssueSubType1) {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเลือกรายการข้อมูล' });
+            return
+        }
+
+        let _Item1 = []
+        if (_AuditIssueSubType1) {
+            if (typeof _AuditIssueSubType1 === 'string') {
+                _ListAuditIssueMainID.push(parseInt(_AuditIssueSubType1))
+                _Item1.push({
+                    AuditIssueSubID: parseInt(_AuditIssueSubType1),
+                    ListActivityVerify: [],
+                })
+            } else {
+                _ListAuditIssueMainID = _AuditIssueSubType1.flatMap((val) => +val)
+                _Item1 = _AuditIssueSubType1.flatMap((val) => ({
+                    AuditIssueSubID: +val,
+                    ListActivityVerify: [],
+                }))
+            }
+        }
+
+        let _Item2 = []
+        if (_AuditIssueSubType2) {
+            if (typeof _AuditIssueSubType2 === 'string') {
+                _ListAuditIssueMainID.push(parseInt(_AuditIssueSubType2))
+                _Item2.push({
+                    AuditIssueSubID: parseInt(_AuditIssueSubType2),
+                    ListActivityVerify: [],
+                })
+            } else {
+                _ListAuditIssueMainID = _AuditIssueSubType2.flatMap((val) => +val)
+                _Item2 = _AuditIssueSubType2.flatMap((val) => ({
+                    AuditIssueSubID: +val,
+                    ListActivityVerify: [],
+                }))
+            }
+        }
+
+        let _Item3 = []
+        if (_AuditIssueSubType3) {
+            if (typeof _AuditIssueSubType3 === 'string') {
+                let _ActivityVerify = _FormData[`ActivityVerify[${_AuditIssueSubType3}]`]
+                _ListAuditIssueMainID.push(parseInt(_AuditIssueSubType3))
+                _Item3.push({
+                    AuditIssueSubID: parseInt(_AuditIssueSubType3),
+                    ListActivityVerify: _ActivityVerify != undefined ? [...typeof _ActivityVerify === 'string' ? [_ActivityVerify] : _ActivityVerify] : [],
+                })
+            } else {
+                _ListAuditIssueMainID = _AuditIssueSubType3.flatMap((val) => +val)
+                _Item3 = _AuditIssueSubType3.flatMap((val) => {
+                    let _ActivityVerify = _FormData[`ActivityVerify[${val}]`] ?? []
+                    return {
+                        AuditIssueSubID: +val,
+                        ListActivityVerify: [...typeof _ActivityVerify === 'string' ? [_ActivityVerify] : _ActivityVerify],
+                    }
+                })
+            }
+        }
+
+
+        let _Data = {
+            AuditManegementSegmentID: _FormData.AuditManegementSegmentID,
+            FacultyID: +_FormData.FacultyID,
+            AuditIssueMainID: +_FormData.AuditIssueMainID,
+            StartDate: _FormData.StartDate && _FormData.StartDate != '' ? _FormData.StartDate : null,
+            EndDate: _FormData.EndDate && _FormData.EndDate != '' ? _FormData.EndDate : null,
+            Items: [..._Item1, ..._Item2, ..._Item3],
+        }
+
+        console.log(_Data)
+        // return;
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("EditAuditManegementSegment", "SetUpSegmentAudit")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(_Data),
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message });
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
+                    LoadDataTable('AuditManegementSegmentTable')
+                    ClearData()
+                    if (res?.data?.isDeleteWorkingPaper) {
+                        // $.ajax({
+                        //     url: '@Url.Action("DeleteWorkingPaper", "WorkingPaper")',
+                        //     type: 'POST',
+                        //     data: { WorkingPaperID: WorkingPaperID },
+                        //     dataType: 'json',
+                        // })
+                    }
+                }
+            })
+        })
+    })
+
+    function GetPageSetupSegmentDetail(AuditIssueMainID) {
+        $('#ContentsForm').html('')
+        if (AuditIssueMainID == '') return
+        $.ajax({
+            url: `@Url.Action("GetPageSetupSegmentDetail", "SetUpSegmentAudit")?AuditIssueMainID=${AuditIssueMainID}&AuditManegementSegmentID=${$("#AuditManegementSegmentID").val()}`,
+            method: "GET",
+            success: function (data) {
+                $('#ContentsForm').html(data);
+            }
+        });
+    }
+
+    function CheckAllDisabled(Checked, Val) {
+        let $checkbox = $(`#FormEditAuditManegementSegment #ContentBody #SubType_4 .Check_${Val}`);
+        $checkbox.prop('disabled', !Checked).prop('checked', Checked ? $checkbox.prop('checked') : false);
+    }
+
+    function ClearData() {
+        $('#Content').html('')
+    }
+</script>

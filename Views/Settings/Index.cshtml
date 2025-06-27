@@ -1,0 +1,70 @@
+﻿@{
+    ViewData["Title"] = Html.Raw($"การตั้งค่า (Settings)");
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info">
+                <h1 class="card-title mt-1">@ViewData["Title"]</h1>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-primary" id="AuditIssueMain-tab" data-toggle="tab" data-target="#AuditIssueMain" type="button" role="tab" aria-controls="AuditIssueMain" aria-selected="true" onclick="GetPageView(`#AuditIssueMain`)">ประเด็นการตรวจสอบ</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-primary" id="UserAuditor-tab" data-toggle="tab" data-target="#UserAuditor" type="button" role="tab" aria-controls="UserAuditor" aria-selected="false" onclick="GetPageView(`#UserAuditor`)">ผู้ตรวจสอบ</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-primary" id="Faculty-tab" data-toggle="tab" data-target="#Faculty" type="button" role="tab" aria-controls="Faculty" aria-selected="false" onclick="GetPageView(`#Faculty`)">ส่วนงาน</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade mt-2 show active" id="AuditIssueMain" role="tabpanel" aria-labelledby="AuditIssueMain-tab"></div>
+                    <div class="tab-pane fade mt-2" id="UserAuditor" role="tabpanel" aria-labelledby="UserAuditor-tab">ผู้ตรวจสอบ</div>
+                    <div class="tab-pane fade mt-2" id="Faculty" role="tabpanel" aria-labelledby="Faculty-tab">ส่วนงาน</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            GetPageView(`#AuditIssueMain`)
+        })
+
+        function GetPageView(TabID = '') {
+            let url = ''
+            switch(TabID) {
+                case '#AuditIssueMain':
+                       url = `AuditIssueMain`
+                    break
+                case '#UserAuditor':
+                       url = `UserAuditor`
+                    break
+                case '#Faculty':
+                       url = `Faculty`
+                    break
+                default:
+                       window.location.reload()
+                    break
+            }
+
+            if (url == '') return
+            $('#AuditIssueMain').html('')
+            $('#UserAuditor').html('')
+            $('#Faculty').html('')
+            $.ajax({
+                url: '/Settings/GetPage?PageName=' + url,
+                type: 'GET',
+                dataType: 'html',
+                success: function (res) {
+                    $(TabID).html(res);
+                }
+            });
+        }
+    </script>
+}

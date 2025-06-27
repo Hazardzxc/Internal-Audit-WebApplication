@@ -1,0 +1,477 @@
+﻿@model STD.Models.DB.AuditIssueMain
+@using STD.Models.DB;
+@{
+    Layout = null;
+    ViewData["Title"] = Model == null ? "เพิ่มข้อมูลประเด็นการตวจสอบ" : "แก้ไขข้อมูลประเด็นการตวจสอบ";
+
+    List<AuditIssueSub> _ListAuditIssueSub = new List<AuditIssueSub>();
+    if (Model != null && Model.AuditIssueMainId > 0)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            _ListAuditIssueSub = DB.AuditIssueSubs.Where(x => x.AuditIssueMainId.Equals(Model.AuditIssueMainId)).ToList();
+        }
+    }
+}
+
+<form id="FormAuditIssueMain">
+    <div class="row">
+        @if (Model != null && Model.AuditIssueMainId > 0)
+        {
+            <input type="hidden" id="AuditIssueMainID" name="AuditIssueMainID" value="@Model.AuditIssueMainId">
+        }
+        <div class="col-md-12">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>เรื่องประเด็นการตวจสอบ</label>
+                    <input type="text" class="form-control" id="AuditIssueMainName" name="AuditIssueMainName" required value="@(Model != null && !string.IsNullOrEmpty(Model.AuditIssueMainName) ? Model.AuditIssueMainName : "")">
+                </div>
+            </div>
+            <div class="col-md-12">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-primary" id="AuditIssueSubType1-tab" data-toggle="tab" data-target="#AuditIssueSubType1" type="button" role="tab" aria-controls="AuditIssueSubType1" aria-selected="true">วัตถุประสงค์</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-primary" id="AuditIssueSubType2-tab" data-toggle="tab" data-target="#AuditIssueSubType2" type="button" role="tab" aria-controls="AuditIssueSubType2" aria-selected="false">อ้างอิง</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-primary" id="AuditIssueSubType3-tab" data-toggle="tab" data-target="#AuditIssueSubType3" type="button" role="tab" aria-controls="AuditIssueSubType3" aria-selected="false">กิจกรรมการควบคุม</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade mt-2 show active" id="AuditIssueSubType1" role="tabpanel" aria-labelledby="AuditIssueSubType1-tab">
+                        <div class="col-md-12">
+                            <button type="button" class="btn btn-secondary mt-2 mb-2" onclick="AddRow()">
+                                <i class="fas fa-plus"></i> เพิ่มรายการวัตถุประสงค์
+                            </button>
+                            <table class="table table-bordered" id="AuditIssueSubTable">
+                                <thead>
+                                    <tr>
+                                        <th>วัตถุประสงค์</th>
+                                        <th width="20%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="AuditIssueSubTableBody">
+                                    @if (_ListAuditIssueSub != null && _ListAuditIssueSub.Count > 0)
+                                    {
+                                        int i = 0;
+                                        @foreach (AuditIssueSub item in _ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(1)))
+                                        {
+                                            i++;
+                                            <tr id="row_@i" class="rows">
+                                                <td>
+                                                    <input type="text" class="form-control" id="AuditIssueSubName" name="AuditIssueSubName" required value="@item.AuditIssueSubName">
+                                                    <input type="hidden" id="AuditIssueSubID" name="AuditIssueSubID" value="@item.AuditIssueSubId">
+                                                    <input type="hidden" id="Ref" name="Ref" value="@item.AuditIssueSubType">
+                                                    <input type="hidden" id="Row" name="Row" value="@i">
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRow(@i,@item.AuditIssueSubId)">
+                                                        <i class="fas fa-trash"></i> ลบ
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade mt-2" id="AuditIssueSubType2" role="tabpanel" aria-labelledby="AuditIssueSubType2-tab">
+                        <div class="col-md-12">
+                            <button type="button" class="btn btn-secondary mt-2 mb-2" onclick="AddRow(2)">
+                                <i class="fas fa-plus"></i> เพิ่มรายการอ้างอิง
+                            </button>
+                            <table class="table table-bordered" id="AuditIssueSubRefTable">
+                                <thead>
+                                    <tr>
+                                        <th>อ้างอิง</th>
+                                        <th width="20%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="AuditIssueSubRefTableBody">
+                                    @if (_ListAuditIssueSub != null && _ListAuditIssueSub.Count > 0)
+                                    {
+                                        int i = 0;
+                                        @foreach (AuditIssueSub item in _ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(2)))
+                                        {
+                                            i++;
+                                            <tr id="rowRef_@i" class="rowsRef">
+                                                <td>
+                                                    <input type="text" class="form-control" id="AuditIssueSubNameRef" name="AuditIssueSubNameRef" required value="@item.AuditIssueSubName">
+                                                    <input type="hidden" id="AuditIssueSubIDRef" name="AuditIssueSubIDRef" value="@item.AuditIssueSubId">
+                                                    <input type="hidden" id="Ref" name="Ref" value="@item.AuditIssueSubType">
+                                                    <input type="hidden" id="RowRef" name="RowRef" value="@i">
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRowRef(@i, @item.AuditIssueSubId)">
+                                                        <i class="fas fa-trash"></i> ลบ
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade mt-2" id="AuditIssueSubType3" role="tabpanel" aria-labelledby="AuditIssueSubType3-tab">
+                        <div class="col-md-12">
+                            <button type="button" class="btn btn-secondary mt-2 mb-2" onclick="AddRow(3)">
+                                <i class="fas fa-plus"></i> เพิ่มรายการกิจกรรมการควบคุม
+                            </button>
+                            <table class="table table-bordered" id="AuditIssueSubRefConTable">
+                                <thead>
+                                    <tr>
+                                        <th>กิจกรรมการควบคุม</th>
+                                        <th width="30%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="AuditIssueSubRefConTableBody">
+                                    @if (_ListAuditIssueSub != null && _ListAuditIssueSub.Count > 0)
+                                    {
+                                        int i = 0;
+                                        @foreach (AuditIssueSub item in _ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(3)))
+                                        {
+                                            i++;
+                                            <tr id="rowRefCon_@i" class="rowsRefCon">
+                                                <td>
+                                                    <input type="text" class="form-control" id="AuditIssueSubNameRefCon" name="AuditIssueSubNameRefCon" required value="@item.AuditIssueSubName">
+                                                    <input type="hidden" id="AuditIssueSubIDRefCon" name="AuditIssueSubIDRefCon" value="@item.AuditIssueSubId">
+                                                    <input type="hidden" id="Ref" name="Ref" value="@item.AuditIssueSubType">
+                                                    <input type="hidden" id="RowRefCon" name="RowRefCon" value="@i">
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-info" onclick="OpenModalAuditIssueActivityVerify(@item.AuditIssueSubId)">
+                                                        <i class="fas fa-bookmark"></i> วิธีการตรวจสอบ
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRowRefCon(@i, @item.AuditIssueSubId)">
+                                                        <i class="fas fa-trash"></i> ลบ
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 text-right">
+            <button type="button" class="btn btn-danger" onclick="ClearData()">เคลียร์</button>
+            <button type="submit" class="btn btn-success">บันทึก</button>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade" id="ModalAuditIssueActivityVerify" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">วิธีการตรวจสอบ</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="ClearDataActivityVerify()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="FormAuditIssueActivityVerify">
+                <div class="modal-body">
+                    <div id="ContentAuditIssueActivityVerify" class="container-fluid"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-danger" onclick="ClearDataActivityVerify()">ปิดหน้าต่าง</button>
+                    <button type="submit" class="btn btn-success">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var row = $('#AuditIssueSubTableBody tr').length || 0;
+    var rowRef = $('#AuditIssueSubRefTable tr').length || 0;
+    var rowRefCon = $('#AuditIssueSubRefConTable tr').length || 0;
+
+    $(document).ready(function () {
+        RunningRow()
+    })
+
+    $('#FormAuditIssueMain').submit(function (e) {
+         e.preventDefault()
+
+         const _FormData = $(this).serializeFormJSON()
+         const ListAuditIssueSub = [];
+         if ( _FormData.Row?.length == 1){
+             const _AuditIssueSubID = _FormData.AuditIssueSubID
+             const _AuditIssueSubName = _FormData.AuditIssueSubName
+             ListAuditIssueSub.push({
+                 AuditIssueSubID: _AuditIssueSubID ? +_AuditIssueSubID : 0,
+                 AuditIssueSubName: _AuditIssueSubName ? _AuditIssueSubName : '',
+                 Ref: 1,
+             })
+         } else if (_FormData.Row?.length > 1) {
+             for (let i = 0; i < _FormData.Row?.length; i++) {
+                 const _AuditIssueSubID = _FormData.AuditIssueSubID[i]
+                 const _AuditIssueSubName = _FormData.AuditIssueSubName[i]
+                 ListAuditIssueSub.push({
+                     AuditIssueSubID: _AuditIssueSubID ? +_AuditIssueSubID : 0,
+                     AuditIssueSubName: _AuditIssueSubName ? _AuditIssueSubName : '',
+                     Ref: 1,
+                 })
+             }
+         }
+
+         const ListAuditIssueSubRef = [];
+         if (_FormData.RowRef?.length == 1) {
+             const _AuditIssueSubID = _FormData.AuditIssueSubIDRef
+             const _AuditIssueSubName = _FormData.AuditIssueSubNameRef
+             ListAuditIssueSubRef.push({
+                 AuditIssueSubID: _AuditIssueSubID ? +_AuditIssueSubID : 0,
+                 AuditIssueSubName: _AuditIssueSubName ? _AuditIssueSubName : '',
+                 Ref: 2,
+             })
+         } else if (_FormData.RowRef?.length > 1) {
+              for (let i = 0; i < _FormData.RowRef?.length; i++) {
+                 const _AuditIssueSubID = _FormData.AuditIssueSubIDRef[i]
+                 const _AuditIssueSubName = _FormData.AuditIssueSubNameRef[i]
+                 ListAuditIssueSubRef.push({
+                     AuditIssueSubID: _AuditIssueSubID ? +_AuditIssueSubID : 0,
+                     AuditIssueSubName: _AuditIssueSubName ? _AuditIssueSubName : '',
+                     Ref: 2,
+                 })
+             }
+         }
+
+         const ListAuditIssueSubRefCon = [];
+         if (_FormData.RowRefCon?.length == 1) {
+             const _AuditIssueSubID = _FormData.AuditIssueSubIDRefCon
+             const _AuditIssueSubName = _FormData.AuditIssueSubNameRefCon
+             ListAuditIssueSubRefCon.push({
+                 AuditIssueSubID: _AuditIssueSubID ? +_AuditIssueSubID : 0,
+                 AuditIssueSubName: _AuditIssueSubName ? _AuditIssueSubName : '',
+                 Ref: 3,
+             })
+         } else if (_FormData.RowRefCon?.length > 1) {
+              for (let i = 0; i < _FormData.RowRefCon?.length; i++) {
+                 const _AuditIssueSubID = _FormData.AuditIssueSubIDRefCon[i]
+                 const _AuditIssueSubName = _FormData.AuditIssueSubNameRefCon[i]
+                 ListAuditIssueSubRef.push({
+                     AuditIssueSubID: _AuditIssueSubID ? +_AuditIssueSubID : 0,
+                     AuditIssueSubName: _AuditIssueSubName ? _AuditIssueSubName : '',
+                     Ref: 3,
+                 })
+             }
+         }
+
+         const _Data = {
+             AuditIssueMainID: _FormData.AuditIssueMainID ?? 0,
+             AuditIssueMainName: _FormData.AuditIssueMainName ?? '',
+             ListAuditIssueSub: [...ListAuditIssueSub, ...ListAuditIssueSubRef, ...ListAuditIssueSubRefCon],
+         }
+
+         if (_Data.ListAuditIssueSub.length == 0) {
+             Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเพิ่ม ปัญหาการตรวจสอบ หรือ อ้างอิง หรือ กิจกรรมการควบคุม' });
+             return
+         }
+         // console.log(_Data)
+         // return;
+         Swal.fire({
+             title: 'คุณแน่ใจไหม?',
+             text: "คุณจะบันทึกข้อมูล!",
+             icon: 'warning',
+             showCancelButton: true,
+             confirmButtonColor: '#28a745',
+             cancelButtonColor: '#d33',
+             confirmButtonText: "ตกลง",
+             cancelButtonText: "ยกเลิก",
+         }).then((result) => {
+             if (!result.isConfirmed) return;
+             $.ajax({
+                 url: '@Url.Action("SaveAuditIssueMain", "AuditIssueMain")',
+                 type: 'POST',
+                 data: _Data,
+                 dataType: 'json',
+                 success: function (res) {
+                     if (!res.status) {
+                         Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                         return
+                     }
+                     Swal.fire({  icon: 'success', title: 'สำเร็จ', text: res.message })
+                     $('#ContentAuditIssueMain').html('')
+                     LoadDataTable('AuditIssueMainTable')
+                 }
+             })
+         })
+     })
+
+    function OpenModalAuditIssueActivityVerify(AuditIssueSubID = 0) {
+         $('#ContentAuditIssueActivityVerify').html('')
+         $.ajax({
+             url: '@Url.Action("GetAuditIssueActivityVerifyForm", "AuditIssueMain")?AuditIssueSubID=' + AuditIssueSubID,
+             type: 'GET',
+             dataType: 'html',
+             success: function (res) {
+                 RunningRow();
+                 $('#ContentAuditIssueActivityVerify').html(res)
+                 $('#ModalAuditIssueActivityVerify').modal('show')
+             }
+         })
+     }
+
+    function AddRow(Type = 1) {
+
+         if (Type != 1 && Type != 2 && Type != 3) return
+
+         let html = "";
+         switch(+Type) {
+             case 1:
+                  row = $('#AuditIssueSubTableBody .rows').length
+                  row++;
+                  html = `
+                     <tr id="row_${row}" class="rows">
+                         <td>
+                             <input type="text" class="form-control" id="AuditIssueSubName" name="AuditIssueSubName" required>
+                             <input type="hidden" class="form-control" id="AuditIssueSubID" name="AuditIssueSubID" value="">
+                             <input type="hidden" class="form-control" id="Ref" name="Ref" value="1">
+                             <input type="hidden" class="form-control" id="Row" name="Row" value="${row}">
+                         </td>
+                         <td class="text-center">
+                             <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRow(${row})">
+                                 <i class="fas fa-trash"></i> ลบ
+                             </button>
+                          </td>
+                     </tr>
+                  `;
+                  $('#AuditIssueSubTableBody').append(html)
+             break
+             case 2:
+                  rowRef = $('#AuditIssueSubRefTableBody .rowsRef').length
+                  rowRef++;
+                  html = `
+                     <tr id="rowRef_${rowRef}" class="rowsRef">
+                         <td>
+                             <input type="text" class="form-control" id="AuditIssueSubNameRef" name="AuditIssueSubNameRef" required>
+                             <input type="hidden" class="form-control" id="AuditIssueSubIDRef" name="AuditIssueSubIDRef" value="">
+                             <input type="hidden" class="form-control" id="Ref" name="Ref" value="2">
+                             <input type="hidden" class="form-control" id="RowRef" name="RowRef" value="${rowRef}">
+                         </td>
+                         <td class="text-center">
+                             <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRowRef(${rowRef})">
+                                 <i class="fas fa-trash"></i> ลบ
+                             </button>
+                          </td>
+                     </tr>
+                  `;
+                  $('#AuditIssueSubRefTableBody').append(html)
+             break
+             case 3:
+                  rowRefCon = $('#AuditIssueSubRefConTableBody .rowsRefCon').length
+                  rowRefCon++;
+                  html = `
+                     <tr id="rowRefCon_${rowRefCon}" class="rowsRefCon">
+                         <td>
+                             <input type="text" class="form-control" id="AuditIssueSubNameRef" name="AuditIssueSubNameRefCon" required>
+                             <input type="hidden" class="form-control" id="AuditIssueSubIDRef" name="AuditIssueSubIDRefCon" value="">
+                             <input type="hidden" class="form-control" id="Ref" name="Ref" value="3">
+                             <input type="hidden" class="form-control" id="RowRefCon" name="RowRefCon" value="${rowRefCon}">
+                         </td>
+                         <td class="text-center">
+                             <button type="button" class="btn btn-sm btn-danger" onclick="RemoveRowRefCon(${rowRefCon})">
+                                 <i class="fas fa-trash"></i> ลบ
+                             </button>
+                          </td>
+                     </tr>
+                  `;
+                  $('#AuditIssueSubRefConTableBody').append(html)
+             break
+         }
+     }
+
+    function RemoveRow(row, AuditIssueSubID = 0) {
+         if(AuditIssueSubID <= 0 || !AuditIssueSubID || AuditIssueSubID == undefined) {
+             $(`#row_${row}`).remove();
+             RunningRow();
+             return
+         }
+
+         $.ajax({
+             url: '@Url.Action("DeleteAuditIssueSub", "AuditIssueMain")',
+             type: 'POST',
+             data: {
+                 AuditIssueSubID: AuditIssueSubID
+             },
+             success: function (res) {
+                 if (res.status) {
+                     $(`#row_${row}`).remove();
+                     RunningRow();
+                 }
+             }
+         })
+     }
+
+    function RemoveRowRef(row, AuditIssueSubID = 0) {
+         if(AuditIssueSubID <= 0 || !AuditIssueSubID || AuditIssueSubID == undefined) {
+             $(`#rowRef_${row}`).remove();
+             RunningRow();
+             return
+         }
+
+         $.ajax({
+             url: '@Url.Action("DeleteAuditIssueSub", "AuditIssueMain")',
+             type: 'POST',
+             data: { AuditIssueSubID: AuditIssueSubID },
+             success: function (res) {
+                 if (res.status) {
+                     $(`#rowRef_${row}`).remove();
+                     RunningRow();
+                 }
+             }
+         })
+    }
+
+    function RemoveRowRefCon(row, AuditIssueSubID = 0) {
+         if(AuditIssueSubID <= 0 || !AuditIssueSubID || AuditIssueSubID == undefined) {
+             $(`#rowRefCon_${row}`).remove();
+             RunningRow();
+             return
+         }
+
+         $.ajax({
+             url: '@Url.Action("DeleteAuditIssueSub", "AuditIssueMain")',
+             type: 'POST',
+             data: { AuditIssueSubID: AuditIssueSubID },
+             success: function (res) {
+                 if (res.status) {
+                     $(`#rowRefCon_${row}`).remove();
+                     RunningRow();
+                 }
+             }
+         })
+    }
+
+    function RunningRow() {
+         $('#AuditIssueSubTableBody tr').each(function (index) {
+            row = index + 1
+         })
+         $('#AuditIssueSubRefTableBody tr').each(function (index) {
+            rowRef = index + 1
+         })
+     }
+
+    function ClearData() {
+        $('#FormAuditIssueMain input').val('')
+        $('#FormAuditIssueMain .rows').remove()
+        $('#FormAuditIssueMain .rowsRef').remove()
+        $('#FormAuditIssueMain .rowsRefCon').remove()
+    }
+
+    function ClearDataActivityVerify() {
+        $('#ModalAuditIssueActivityVerify').modal('hide')
+        $('#ContentAuditIssueActivityVerify').html('')
+        $('#FormAuditIssueActivityVerify')[0].reset()
+    }
+
+</script>

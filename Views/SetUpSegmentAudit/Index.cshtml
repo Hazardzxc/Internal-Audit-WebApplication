@@ -1,0 +1,73 @@
+﻿@{
+    string Title = "";
+    ViewData["Title"] = Html.Raw(@Title);
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info">
+                <h2 class="card-title mt-1">@Title</h2>
+            </div>
+            <div class="card-body">
+                <div class="col-md-12 table-responsive">
+                    <table id="FacultyTable" class="table table-bordered table-striped table-hover"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#FacultyTable').DataTable({
+                serverSide: false,
+                bDestroy: true,
+                pageLength: 10,
+                searching: true,
+                info: true,
+                filter: true,
+                lengthMenu: [10, 20, 50, 100, 200, 500, 1000],
+                language: {
+                    processing: "กำลังประมวลผล...",
+                    loadingRecords: "Loading...",
+                    lengthMenu: "แสดง _MENU_ รายการ",
+                    search: "ค้นหา :",
+                    zeroRecords: "<font color='red'><center>ไม่พบข้อมูลที่คุณต้องการ ค้นหา</center></font>",
+                    info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
+                    infoEmpty: "แสดง 0 ถึง 0 จากทั้งหมด 0 รายการ",
+                    infoFiltered: "(ค้นหา จากทั้งหมด _MAX_ รายการ)",
+                    paginate: {
+                        first: "หน้าแรก",
+                        last: "หน้าสุดท้าย",
+                        next: "ถัดไป",
+                        previous: "ก่อนหน้า",
+                    },
+                },
+                ajax: {
+                    url: '@Url.Action("GetFaculty", "Faculty")',
+                    type: 'GET',
+                },
+                columns: [
+                    {
+                        data: null, title: "#", "autoWidth": true, width: "30px",
+                        render: function (data, type, row, meta) {
+                            return meta.row + 1;
+                        }
+                    },
+                    {
+                        data: 'facultyCode', name: "facultyCode", title: "รหัสส่วนงาน", "autoWidth": true, width: "150px",
+                    },
+                    {
+                        data: 'facultyName', name: "facultyName", title: "ชื่อส่วนงาน", "autoWidth": true,
+                        render: function (d, t, r) {
+                            return `<a href="@Url.Action("AuditManegementSegment", "SetUpSegmentAudit")?FacultyID=${r.facultyId}">${d}</a>`
+                        }
+                    },
+                ],
+                order: [[0, 'asc']]
+            })
+        })
+    </script>
+}

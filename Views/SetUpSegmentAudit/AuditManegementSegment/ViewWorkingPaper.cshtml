@@ -1,0 +1,290 @@
+﻿@model STD.Models.DB.AuditManegementSegment
+@using STD.Models.DB
+@{
+    //Layout = "~/Views/Shared/_Views.cshtml";
+    Faculty? _Faculty = null;
+    AuditIssueMain? _AuditIssueMain = null;
+    List<AuditManegementSegmentSub>? _ListAuditManegementSegmentSub = new List<AuditManegementSegmentSub>();
+    List<UserAuditor> _ListUserAuditor = new List<UserAuditor>();
+    WorkingPaper? _WorkingPaper = null;
+    List<WorkingPaperActivity> _ListWorkingPaperActivity = new List<WorkingPaperActivity>();
+    var WorkingPaperID = ViewBag.WorkingPaperID;
+    if (Model != null)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            _Faculty = DB.Faculties.Where(w => w.FacultyId.Equals(Model.FacultyId)).FirstOrDefault();
+            _AuditIssueMain = DB.AuditIssueMains.Where(w => w.AuditIssueMainId.Equals(Model.AuditIssueMainId)).FirstOrDefault();
+            _ListAuditManegementSegmentSub = DB.AuditManegementSegmentSubs.Where(w => w.AuditManegementSegmentId.Equals(Model.AuditManegementSegmentId)).ToList();
+            _ListUserAuditor = DB.UserAuditors.ToList();
+            if (WorkingPaperID != null && !string.IsNullOrEmpty(WorkingPaperID))
+            {
+                Guid _WorkingPaperID = Guid.Parse(WorkingPaperID);
+                _WorkingPaper = DB.WorkingPapers.Where(w => w.WorkingPaperId.Equals(_WorkingPaperID) && w.AuditManegementSegmentId.Equals(Model.AuditManegementSegmentId)).FirstOrDefault();
+            }
+
+            if (_WorkingPaper != null)
+            {
+                _ListWorkingPaperActivity = DB.WorkingPaperActivities.Where(w => w.WorkingPaperId.Equals(_WorkingPaper.WorkingPaperId)).OrderBy(o => o.CreateDate).ToList();
+            }
+        }
+    }
+}
+
+<style>
+    #FormWorkingPaper ol {
+    counter-reset: item
+    }
+
+    #FormWorkingPaper li {
+    display: block
+    }
+
+    #FormWorkingPaper li:before {
+    content: counters(item, ".") " ";
+    counter-increment: item
+    }
+</style>
+
+<div class="p-3">
+    <div class="border border-dark">
+        <input type="hidden" id="AuditManegementSegmentID" name="AuditManegementSegmentID" value="@(Model != null ? Model.AuditManegementSegmentId : "")" />
+        <input type="hidden" id="WorkingPaperID" name="WorkingPaperID" value="@(WorkingPaperID != null && !string.IsNullOrEmpty(WorkingPaperID) ? WorkingPaperID : "")" />
+        <div class="row col-md-12">
+            <div class="col-md-2 text-center border-right border-dark p-5">
+                <div>
+                    <img src="~/AdminLTE/dist/img/AdminLTELogo.png" class="img-thumbnail" width="150" height="150" alt="...">
+                </div>
+                <div>
+                    <span>ศูนย์ตรวจสอบภายใน</span>
+                </div>
+                <div>
+                    <span>มหาวิทยาลัยมหิดล</span>
+                </div>
+            </div>
+            <div class="col-md-6 border-right border-dark p-2">
+                <h5 class="text-center">แนวการตรวจสอบ (Audit Program) & กระดาษทำการ (Working Paper)</h5>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">หน่วยรับตรวจ :</label>
+                    <label class="col-md-8 col-form-label">@(_Faculty != null ? _Faculty.FacultyName : "")</label>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">โครงการตรวจลำดับที่ :</label>
+                    <div class="col-md-8">
+                        <input type="number" min="1" class="form-control" id="No" name="No" value="@(_WorkingPaper != null ? _WorkingPaper.No : "")" disabled />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">เรื่องที่ทำการตรวจสอบ :</label>
+                    <label class="col-md-8 col-form-label">@(_AuditIssueMain != null ? _AuditIssueMain.AuditIssueMainName : "")</label>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ระยะเวลาที่ทำการตรวจสอบ :</label>
+                    <div class="col-md-8">
+                        <input type="text" class="form-control daterange" id="Daterange" name="Daterange" autocomplete="off" value="@(_WorkingPaper != null ? $"{_WorkingPaper.StartDate.ToString("dd/MM/yyyy")} - {_WorkingPaper.EndDate.ToString("dd/MM/yyyy")}" : "")" disabled />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้ตรวจสอบ :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="AuditorBy" name="AuditorBy" disabled>
+                            <option value="">----- เลือกผู้ตรวจสอบ -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId" selected="@(_WorkingPaper != null && item.AuditorId.Equals(_WorkingPaper.AuditorBy))">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้ควบคุมการปฏิบัติงาน :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="OperationsControllerAuditorBy" name="OperationsControllerAuditorBy" disabled>
+                            <option value="">----- เลือกผู้ควบคุมการปฏิบัติงาน -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId" selected="@(_WorkingPaper != null && item.AuditorId.Equals(_WorkingPaper.OperationsControllerAuditorBy))">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mt-2">
+                <div class="row">
+                    <label class="col-md-4 col-form-label">ทบทวนครั้งที่ :</label>
+                    <div class="col-md-8">
+                        <input type="number" min="1" class="form-control" id="ReviewNo" name="ReviewNo" autocomplete="off" value="@(_WorkingPaper != null ? _WorkingPaper.ReviewNo : "")" disabled />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-12 col-form-label DateNowTH"></label>
+                </div>
+                <hr style="border-top:1px solid" />
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้จัดทำ :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="ProducerBy" name="ProducerBy" disabled>
+                            <option value="">----- เลือกผู้จัดทำ -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId" selected="@(_WorkingPaper != null && item.AuditorId.Equals(_WorkingPaper.ProducerBy))">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้สอบทาน :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="ReviewerBy" name="ReviewerBy" disabled>
+                            <option value="">----- เลือกผู้สอบทาน -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId" selected="@(_WorkingPaper != null && item.AuditorId.Equals(_WorkingPaper.ProducerBy))">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">ผู้อนุมัติ :</label>
+                    <div class="col-md-8">
+                        <select class="form-control" id="ApproveBy" name="ApproveBy" disabled>
+                            <option value="">----- เลือกผู้อนุมัติ -----</option>
+                            @foreach (UserAuditor item in _ListUserAuditor)
+                            {
+                                <option value="@item.AuditorId" selected="@(_WorkingPaper != null && item.AuditorId.Equals(_WorkingPaper.ApproveBy))">@item.FirstName @item.LastName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <hr style="border-top:1px solid" />
+                <div class="row mb-2">
+                    <label class="col-md-4 col-form-label">วันที่อนุมัติ :</label>
+                    <div class="col-md-8">
+                        <input type="date" class="form-control" id="ApproveDate" name="ApproveDate" value="@(_WorkingPaper != null ? _WorkingPaper.ApproveDate.ToString("yyyy-MM-dd") : "")" disabled />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-top border-dark mb-2">
+            <div class="row col-md-12">
+                <label class="col-md-2 col-form-label">วัตถุประสงค์ของการตรวจสอบ :</label>
+                <span class="mt-2">เพื่อให้มั่นใจว่า</span>
+            </div>
+            @if (_ListAuditManegementSegmentSub != null && _ListAuditManegementSegmentSub.Count > 0)
+            {
+                <ol>
+                    @foreach (AuditManegementSegmentSub item in _ListAuditManegementSegmentSub.Where(w => w.AuditIssueSubType.Equals(1)).OrderBy(w => w.CreateDate))
+                    {
+                        <li>@item.AuditIssueSubDetail</li>
+                    }
+                </ol>
+            }
+        </div>
+        <div class="border-top border-dark mb-2">
+            <div class="row col-md-12">
+                <label class="col-form-label ml-3" style="width:3.5rem;">อ้างอิง :</label>
+                @if (_ListAuditManegementSegmentSub != null && _ListAuditManegementSegmentSub.Count > 0)
+                {
+                    <ol style="margin-top:10px;">
+                        @foreach (AuditManegementSegmentSub item in _ListAuditManegementSegmentSub.Where(w => w.AuditIssueSubType.Equals(2)).OrderBy(w => w.CreateDate))
+                        {
+                            <li>@item.AuditIssueSubDetail</li>
+                        }
+                    </ol>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3 mb-3">
+        <div class="col-md-12 table-responsive" id="WorkingPaperActivityTableData">
+            <table class="table table-bordered table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ลำดับ</th>
+                        <th width="300px">กิจกรรมการควบคุม</th>
+                        <th>วิธีการตรวจสอบ</th>
+                        <th>ผลการตรวจสอบ</th>
+                        <th>เป็นประเด็น/ไม่เป็นประเด็น</th>
+                        <th>ข้อสังเกต</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_ListWorkingPaperActivity != null && _ListWorkingPaperActivity.Count > 0)
+                    {
+                        int i = 0;
+                        using (AuditManager_Connect DB = new AuditManager_Connect())
+                        {
+                            foreach (WorkingPaperActivity item in _ListWorkingPaperActivity)
+                            {
+                                i++;
+                                AuditIssueSub? _AuditIssueSub = DB.AuditIssueSubs.Where(w => w.AuditIssueSubId.Equals(item.AuditIssueSubId)).FirstOrDefault();
+                                List<WorkingPaperActivitySub> _ListWorkingPaperActivitySub = DB.WorkingPaperActivitySubs.Where(w => w.WorkingPaperActivityId.Equals(item.WorkingPaperActivityId)).OrderBy(w => w.CreateDate).ToList();
+                                List<WorkingPaperActivityVerify> _ListVerify = DB.WorkingPaperActivityVerifies.Where(w => w.WorkingPaperActivityId.Equals(item.WorkingPaperActivityId)).OrderBy(w => w.CreateDate).ToList();
+                                <tr>
+                                    <td>@i</td>
+                                    <td>@(_AuditIssueSub != null ? _AuditIssueSub.AuditIssueSubName : "")</td>
+                                    <td>
+                                        @if (_ListVerify != null && _ListVerify.Count > 0)
+                                        {
+                                            foreach (WorkingPaperActivityVerify itemVerify in _ListVerify)
+                                            {
+                                                AuditIssueActivityVerify? _ObjVerify = DB.AuditIssueActivityVerifies.Where(w => w.AuditIssueActivityId.Equals(itemVerify.AuditIssueActivityId)).FirstOrDefault();
+                                                if (_ObjVerify == null) { continue; }
+                                                <span>- @_ObjVerify.ActivityDetail</span> <br />
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">-</td>
+                                    <td class="text-center">-</td>
+                                    <td class="text-center">-</td>
+                                    <td class="text-center">-</td>
+                                </tr>
+                            }
+                        }
+                    }
+
+                    @* @if (_ListAuditManegementSegmentSub != null && _ListAuditManegementSegmentSub.Count > 0)
+                    {
+                        int i = 0;
+                        List<AuditManegementSegmentSubVerify> _ListAuditManegementSegmentSubVerify = new List<AuditManegementSegmentSubVerify>();
+                        using (AuditManager_Connect DB = new AuditManager_Connect())
+                        {
+                            foreach (AuditManegementSegmentSub item in _ListAuditManegementSegmentSub.Where(w => w.AuditIssueSubType.Equals(3)).OrderBy(w => w.CreateDate))
+                            {
+                                i++;
+                                _ListAuditManegementSegmentSubVerify = DB.AuditManegementSegmentSubVerifies.Where(w => w.AuditManegementSegmentSubId.Equals(item.AuditManegementSegmentSubId)).OrderBy(o => o.CreateDate).ToList();
+                                //WorkingPaperActivityVerify _WorkingPaperActivityVerify = DB.WorkingPaperActivityVerifies.Where(w => w.WorkingPaperActivityId.Equals(item.WorkingPaperActivityId)).OrderBy(w => w.CreateDate).ToList();
+
+                                <tr>
+                                    <td>@i</td>
+                                    <td>@item.AuditIssueSubDetail</td>
+                                    <td>
+                                        @if (_ListAuditManegementSegmentSubVerify != null && _ListAuditManegementSegmentSubVerify.Count > 0)
+                                        {
+                                            foreach (AuditManegementSegmentSubVerify itemVerify in _ListAuditManegementSegmentSubVerify)
+                                            {
+                                                <span>- @itemVerify.AuditIssueActivityDetail</span>
+                                                <br />
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            }
+                        }
+                    } *@
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,1 @@
+﻿dotnet ef dbcontext scaffold "data source=(localdb)\Local; initial catalog=AuditManager; user id=; password=; multipleactiveresultsets=True; TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Models\DB -c AuditManager_DB  --project .\STD.csproj --force -v --no-build

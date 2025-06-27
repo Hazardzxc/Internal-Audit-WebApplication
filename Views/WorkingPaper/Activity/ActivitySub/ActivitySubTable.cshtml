@@ -1,0 +1,97 @@
+﻿@model STD.Models.DB.WorkingPaperActivity
+@using STD.Models.DB
+@{
+    ViewData["Title"] = "";
+    Layout = null;
+
+    List<WorkingPaperActivitySub> _ListWorkingPaperActivitySub = new List<WorkingPaperActivitySub>();
+    if (Model != null)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            _ListWorkingPaperActivitySub = DB.WorkingPaperActivitySubs.Where(w => w.WorkingPaperActivityId.Equals(Model.WorkingPaperActivityId)).OrderBy(o => o.CreateDate).ToList();
+        }
+    }
+}
+
+<table class="table table-bordered table-striped table-hover">
+    <thead>
+        <tr>
+            <th>กิจกรรมการควบคุม</th>
+            <th>วิธีการตรวจสอบ</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (_ListWorkingPaperActivitySub != null && _ListWorkingPaperActivitySub.Count > 0)
+        {
+            using (AuditManager_Connect DB = new AuditManager_Connect())
+            {
+                foreach (WorkingPaperActivitySub item in _ListWorkingPaperActivitySub)
+                {
+                    AuditIssueSub? _AuditIssueSub = DB.AuditIssueSubs.Where(w => w.AuditIssueSubId.Equals(item.AuditIssueSubId)).FirstOrDefault();
+                    List<WorkingPaperActivitySubVerify> _ListWorkingPaperActivitySubVerify = DB.WorkingPaperActivitySubVerifies.Where(w => w.WorkingPaperActivitySubId.Equals(item.WorkingPaperActivitySubId)).OrderBy(w => w.CreateDate).ToList();
+                    <tr>
+                        <td>@(_AuditIssueSub != null ? _AuditIssueSub.AuditIssueSubName : "")</td>
+                        <td>
+                            @if (_ListWorkingPaperActivitySubVerify != null && _ListWorkingPaperActivitySubVerify.Count > 0)
+                            {
+                                foreach (WorkingPaperActivitySubVerify itemVerify in _ListWorkingPaperActivitySubVerify)
+                                {
+                                    AuditIssueActivityVerify? _ObjVerify = DB.AuditIssueActivityVerifies.Where(w => w.AuditIssueActivityId.Equals(itemVerify.AuditIssueActivityId)).FirstOrDefault();
+                                    if (_ObjVerify == null) { continue; }
+                                    <span>- @_ObjVerify.ActivityDetail</span> <br />
+                                }
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="OpenModalWorkingPaperActivitySub('@item.WorkingPaperActivityId', '@item.WorkingPaperActivitySubId')">แก้ไข</button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="DeleteWorkingPaperActivitySub('@item.WorkingPaperActivitySubId')">ลบ</button>
+                        </td>
+                    </tr>
+                }
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="7" class="text-center text-danger font-weight-bold">ไม่พบข้อมูล</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script type="text/javascript">
+    function DeleteWorkingPaperActivitySub(WorkingPaperActivitySubID = null) {
+        if (WorkingPaperActivitySubID == '' || WorkingPaperActivitySubID == null || WorkingPaperActivitySubID == undefined) {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'ไม่พบข้อมูลที่ต้องการลบ' })
+            return
+        }
+
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะลบข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("DeleteWorkingPaperActivitySub", "WorkingPaper")',
+                type: 'POST',
+                data: { WorkingPaperActivitySubID: WorkingPaperActivitySubID },
+                success: function (res) {
+                    if (!res.status) return
+                    GetWorkingPaperActivitySubTable('@(Model == null ? null : Model.WorkingPaperActivityId)');
+                }
+            })
+        })
+    }
+</script>

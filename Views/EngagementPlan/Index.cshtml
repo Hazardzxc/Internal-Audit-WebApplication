@@ -1,0 +1,212 @@
+﻿@using STD.Models.DB;
+@{
+
+    //EngagementPlan
+    Layout = null;
+    ViewData["Title"] = "แผนการมีส่วนร่วม";
+    int AuditManagementID = ViewBag.AuditManagementID ?? 0;
+}
+
+<div class="row">
+    <div class="col-md-12 mb-3">
+        <button type="button" class="btn btn-primary" onclick="openModalEngagementPlan()">
+            <i class="fas fa-plus"></i> เพิ่มข้อมูล
+        </button>
+    </div>
+    <div class="col-md-12 table-responsive">
+        <table id="EngagementPlanTable" class="table table-bordered table-striped table-hover" style="width:100%"></table>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEngagementPlan" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">แผนการมีส่วนร่วม</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="clearData()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="FormEngagementPlan">
+                <div class="modal-body">
+                    <div id="ContentEngagementPlan" class="container-fluid"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearData()">ปิดหน้าต่าง</button>
+                    <button type="submit" id="SaveEngagementPlan" class="btn btn-success">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#EngagementPlanTable').DataTable({
+            serverSide: false,
+            bDestroy: true,
+            pageLength: 10,
+            searching: true,
+            info: true,
+            filter: true,
+            responsive: true,
+            lengthMenu: [10, 20, 50, 100, 200, 500, 1000],
+            language: {
+                processing: "กำลังประมวลผล...",
+                loadingRecords: "Loading...",
+                lengthMenu: "แสดง _MENU_ รายการ",
+                search: "ค้นหา :",
+                zeroRecords: "<font color='red'><center>ไม่พบข้อมูลที่คุณต้องการ ค้นหา</center></font>",
+                info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
+                infoEmpty: "แสดง 0 ถึง 0 จากทั้งหมด 0 รายการ",
+                infoFiltered: "(ค้นหา จากทั้งหมด _MAX_ รายการ)",
+                paginate: {
+                    first: "หน้าแรก",
+                    last: "หน้าสุดท้าย",
+                    next: "ถัดไป",
+                    previous: "ก่อนหน้า",
+                },
+            },
+            ajax: {
+                url: '@Url.Action("GetEngagementPlan", "EngagementPlan")',
+                type: 'POST',
+                data: { AuditManagementID: '@AuditManagementID' }
+            },
+            columns: [
+                {
+                    data: null, title: "#", "autoWidth": true, width: "50px",
+                    render: function (d, t, r, m) {
+                        return m.row + 1;
+                    }
+                },
+                {
+                    data: 'auditProcedure', name: "auditProcedure", title: "วิธีการตรวจสอบ", "autoWidth": true,
+                },
+                {
+                    data: 'auditorName', name: "auditorName", title: "ชื่อผู้ตรวจสอบ", "autoWidth": true,
+                },
+                {
+                    data: 'auditTimeStart', name: "auditTimeStart", title: "เวลาที่เริ่ม", "autoWidth": true,
+                },
+                {
+                    data: 'auditTimeEnd', name: "auditTimeEnd", title: "เวลาที่สิ้นสุด", "autoWidth": true,
+                },
+                {
+                    data: 'engagementPlanID', name: "engagementPlanID", title: "Action", orderable: false, width: "200px",
+                    render: function (d, t, r) {
+                        return `
+                            <div class="text-center">
+                                <button class="btn btn-sm btn-info" onclick="openModalEngagementPlan(${d})">
+                                    <i class="fas fa-edit"></i> แก้ไข
+                                </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteEngagementPlan(${d})">
+                                    <i class="fas fa-trash"></i> ลบ
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            ],
+            order: [[0, 'asc']]
+        })
+    })
+
+     $('#FormEngagementPlan').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+        const _Data = {
+            EngagementPlanID: _FormData.EngagementPlanID ? _FormData.EngagementPlanID : 0,
+            AuditManagementID: @AuditManagementID,
+            AuditorID: _FormData.AuditorID ? _FormData.AuditorID : "",
+            AuditProcedure: _FormData.AuditProcedure ? _FormData.AuditProcedure : '',
+            AuditTimeStart: _FormData.AuditTimeStart ? _FormData.AuditTimeStart : '',
+            AuditTimeEnd: _FormData.AuditTimeEnd ? _FormData.AuditTimeEnd : '',
+            WPCode: _FormData.WPCode ? _FormData.WPCode : '',
+        }
+
+        // console.log(_Data)
+        // return;
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveEngagementPlan", "EngagementPlan")',
+                type: 'POST',
+                data: _Data,
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message });
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
+                    LoadDataTable('EngagementPlanTable');
+                    clearData();
+                }
+            })
+        })
+    })
+
+    function openModalEngagementPlan(EngagementPlanID = 0) {
+        $('#ContentEngagementPlan').html('')
+        $.ajax({
+            url: '@Url.Action("GetEngagementPlanForm", "EngagementPlan")?EngagementPlanID=' + EngagementPlanID,
+            type: 'GET',
+            dataType: 'html',
+            success: function (res) {
+                $('#ContentEngagementPlan').html(res)
+                $('#ModalEngagementPlan').modal('show')
+            }
+        })
+    }
+
+    function deleteEngagementPlan(EngagementPlanID = 0) {
+        if (EngagementPlanID == '' || EngagementPlanID <= '0') {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'ไม่พบข้อมูลที่ต้องการลบ' })
+            return
+        }
+
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะลบข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("DeleteEngagementPlan", "EngagementPlan")',
+                type: 'POST',
+                data: { EngagementPlanID: EngagementPlanID },
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                        return
+                    }
+                    Swal.fire({  icon: 'success', title: 'สำเร็จ', text: res.message })
+                    LoadDataTable('EngagementPlanTable')
+                }
+            })
+        })
+    }
+
+    function clearData(){
+        $('._Auditor').html('')
+        $('#ModalEngagementPlan').modal('hide')
+        $('#ContentEngagementPlan').html('')
+        $('#FormEngagementPlan')[0].reset()
+    }
+</script>

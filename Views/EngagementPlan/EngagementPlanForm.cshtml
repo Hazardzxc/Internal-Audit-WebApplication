@@ -1,0 +1,46 @@
+﻿@model STD.Models.DB.EngagementPlan
+@using STD.Models.DB;
+@{
+    Layout = null;
+    ViewData["Title"] = Model != null ? $"เพิ่มแผนการมีส่วนร่วม" : "แก้ไขแผนการมีส่วนร่วม";
+    List<UserAuditor> _ListAuditor = new List<UserAuditor>();
+    using (AuditManager_Connect DB = new AuditManager_Connect())
+    {
+        _ListAuditor = DB.UserAuditors.ToList();
+    }
+}
+
+<div class="row">
+    @if (Model != null && Model.EngagementPlanId > 0)
+    {
+        <input type="hidden" id="EngagementPlanID" name="EngagementPlanID" value="@Model.EngagementPlanId">
+    }
+   <div class="col-md-12">
+        <div class="form-group">
+            <label>วิธีการตรวจสอบ</label>
+            <textarea id="AuditProcedure" name="AuditProcedure" class="form-control" rows="5" required>@(Model != null && !string.IsNullOrEmpty(Model.AuditProcedure) ? Model.AuditProcedure : "")</textarea>
+        </div>
+        <div class="form-group">
+            <label>ผู้ตรวจสอบ</label>
+            <select id="AuditorID" name="AuditorID" class="form-control" required>
+                <option value="">-- เลือกตรวจสอบ --</option>
+                @foreach (UserAuditor Item in _ListAuditor)
+                {
+                    <option value="@Item.AuditorId" selected="@(Model != null && Model.AuditorId == Model.AuditorId)">@Item.FirstName @Item.LastName</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>เวลาเริ่ม</label>
+            <input type="time" class="form-control" id="AuditTimeStart" name="AuditTimeStart" required value="@(Model != null && !string.IsNullOrEmpty(Model.AuditTimeStart.ToString()) ? Model.AuditTimeStart.ToString("HH:mm") : "")">
+        </div>
+        <div class="form-group">
+            <label>เวลาเสร็จสิ้น</label>
+            <input type="time" class="form-control" id="AuditTimeEnd" name="AuditTimeEnd" required value="@(Model != null && !string.IsNullOrEmpty(Model.AuditTimeEnd.ToString()) ? Model.AuditTimeEnd.ToString("HH:mm") : "")">
+        </div>
+        <div class="form-group">
+            <label>WPCode</label>
+            <input type="text" class="form-control" id="WPCode" name="WPCode" required value="@(Model != null && !string.IsNullOrEmpty(Model.Wpcode) ? Model.Wpcode : "")">
+        </div>
+   </div>
+</div>

@@ -1,0 +1,116 @@
+﻿@model STD.Models.DB.AuditManegementSegment
+@using STD.Models.DB
+@{
+    Layout = null;
+    List<AuditIssueSub> _ListAuditIssueSub = new List<AuditIssueSub>();
+    if (Model != null)
+    {
+        using (AuditManager_Connect DB = new AuditManager_Connect())
+        {
+            int AuditIssueMainID = (int)ViewBag.AuditIssueMainID;
+            if (AuditIssueMainID > 0)
+            {
+                _ListAuditIssueSub = DB.AuditIssueSubs.Where(w => w.AuditIssueMainId.Equals(AuditIssueMainID)).ToList();
+            }
+        }
+    }
+}
+
+<div class="container-fluid mt-4 rows" id="row">
+    <div class="card">
+        <div class="card-body" id="ContentBody">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-primary" id="type1-tab" data-toggle="tab" data-target="#type1" type="button" role="tab" aria-controls="type1" aria-selected="true">วัตถุประสงค์</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-primary" id="type2-tab" data-toggle="tab" data-target="#type2" type="button" role="tab" aria-controls="type2" aria-selected="false">อ้างอิง</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-primary" id="type3-tab" data-toggle="tab" data-target="#type3" type="button" role="tab" aria-controls="type3" aria-selected="false">กิจกรรมการควบคุม</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                @if (_ListAuditIssueSub != null && _ListAuditIssueSub.Count > 0)
+                {
+                    using (AuditManager_Connect DB = new AuditManager_Connect())
+                    {
+                        <div class="tab-pane fade mt-2 show active" id="type1" role="tabpanel" aria-labelledby="type1-tab">
+                            @if (_ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(1)).Count() > 0)
+                            {
+                                <div class="col-md-12" id="Title_1">
+                                    <div class="card border-primary shadow">
+                                        <div class="card-body">
+                                            <h6 class="font-weight-bold">วัตถุประสงค์</h6>
+                                            <div class="ml-3 content-type-scroll" id="SubType_1">
+                                                @foreach (AuditIssueSub Item in _ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(1)))
+                                                {
+                                                    <input type="checkbox" id="AuditIssueSubType_@Item.AuditIssueSubId" checked="@DB.AuditManegementSegmentSubs.Where(w => w.AuditIssueSubType.Equals(1) && w.AuditManegementSegmentId.Equals(Model!.AuditManegementSegmentId) && w.AuditIssueSubId.Equals(Item.AuditIssueSubId)).Any()" name="AuditIssueSubType1" value="@Item.AuditIssueSubId"> <label class="font-weight-normal">@Item.AuditIssueSubName</label>
+                                                    <br>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="tab-pane fade mt-2" id="type2" role="tabpanel" aria-labelledby="type2-tab">
+                            @if (_ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(2)).Count() > 0)
+                            {
+                                <div class="col-md-12" id="Title_2">
+                                    <div class="card border-info shadow">
+                                        <div class="card-body">
+                                            <h6 class="font-weight-bold">อ้างอิง</h6>
+                                            <div class="ml-3 content-type-scroll" id="SubType_2">
+                                                @foreach (AuditIssueSub Item in _ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(2)))
+                                                {
+                                                    <input type="checkbox" id="AuditIssueSubType_@Item.AuditIssueSubId" checked="@DB.AuditManegementSegmentSubs.Where(w => w.AuditIssueSubType.Equals(2) && w.AuditManegementSegmentId.Equals(Model!.AuditManegementSegmentId) && w.AuditIssueSubId.Equals(Item.AuditIssueSubId)).Any()" name="AuditIssueSubType2" value="@Item.AuditIssueSubId"> <label class="font-weight-normal">@Item.AuditIssueSubName</label>
+                                                    <br>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="tab-pane fade mt-2" id="type3" role="tabpanel" aria-labelledby="type3-tab">
+                            @if (_ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(3)).Count() > 0)
+                            {
+                                <div class="col-md-12" id="Title_3">
+                                    <div class="card border-warning shadow">
+                                        <div class="card-body">
+                                            <h6 class="font-weight-bold">กิจกรรมการควบคุม</h6>
+                                            <div class="ml-3 content-type-scroll">
+                                                <div id="SubType_3">
+                                                    @foreach (AuditIssueSub Item in _ListAuditIssueSub.Where(w => w.AuditIssueSubType.Equals(3)))
+                                                    {
+                                                        <input type="checkbox" id="AuditIssueSubType_@Item.AuditIssueSubId" checked="@DB.AuditManegementSegmentSubs.Where(w => w.AuditIssueSubType.Equals(3) && w.AuditManegementSegmentId.Equals(Model!.AuditManegementSegmentId) && w.AuditIssueSubId.Equals(Item.AuditIssueSubId)).Any()" name="AuditIssueSubType3" onchange="CheckAllDisabled(this.checked, @Item.AuditIssueSubId)" value="@Item.AuditIssueSubId"> <label class="font-weight-normal">@Item.AuditIssueSubName</label>
+                                                        <br>
+                                                        List<AuditIssueActivityVerify> _ListAuditIssueActivityVerify = DB.AuditIssueActivityVerifies.Where(w => w.AuditIssueSubId.Equals(Item.AuditIssueSubId)).ToList();
+                                                        if (_ListAuditIssueActivityVerify.Count > 0)
+                                                        {
+                                                            <div class="ml-3" id="Title_4">
+                                                                <h6 class="font-weight-bold">วิธีการตรวจสอบ</h6>
+                                                                <div class="ml-3" id="SubType_4">
+                                                                    @foreach (AuditIssueActivityVerify ItemVerify in _ListAuditIssueActivityVerify)
+                                                                    {
+                                                                        <input type="checkbox" id="ActivityVerify_@Item.AuditIssueSubId.ToString()_@ItemVerify.AuditIssueActivityId" checked="@DB.AuditManegementSegmentSubVerifies.Where(w =>  w.AuditIssueActivityId.Equals(ItemVerify.AuditIssueActivityId)).Any()" disabled="@(!DB.AuditManegementSegmentSubs.Where(w => w.AuditManegementSegmentId.Equals(Model!.AuditManegementSegmentId) && w.AuditIssueSubId.Equals(Item.AuditIssueSubId)).Any())" class="Check_@Item.AuditIssueSubId" name="ActivityVerify[@Item.AuditIssueSubId]" value="@ItemVerify.AuditIssueActivityId"> <label class="font-weight-normal">@ItemVerify.ActivityDetail</label>
+                                                                        <br>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

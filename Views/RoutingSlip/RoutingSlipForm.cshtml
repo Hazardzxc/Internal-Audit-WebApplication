@@ -1,0 +1,31 @@
+﻿@model STD.Models.DB.RoutingSlip
+@using STD.Models.DB;
+@{
+    Layout = null;
+    ViewData["Title"] = Model != null ? $"เพิ่มRoutingSlip" : "แก้ไขRoutingSlip";
+}
+
+<div class="row">
+    @if (Model != null && Model.RoutingSlipId > 0)
+    {
+        <input type="hidden" id="RoutingSlipID" name="RoutingSlipID" value="@Model.RoutingSlipId">
+    }
+   <div class="col-md-12">
+        <div class="form-group">
+            <label>รายละเอียด</label>
+            <textarea id="RoutingSlipDetail" name="RoutingSlipDetail" class="form-control" rows="5" required>@(Model != null && !string.IsNullOrEmpty(Model.RoutingSlipDetail) ? Model.RoutingSlipDetail : "")</textarea>
+        </div>
+        <div class="form-group">
+            <label>แผนการตรวจสอบ</label>
+            <input type="text" class="form-control" id="AuditPlan" name="AuditPlan" required value="@(Model != null && !string.IsNullOrEmpty(Model.AuditPlan) ? Model.AuditPlan : "")">
+        </div>
+        <div class="form-group">
+            <label>ปฏิบัติการจริง</label>
+            <input type="text" class="form-control" id="Practicality" name="Practicality" required value="@(Model != null && !string.IsNullOrEmpty(Model.Practicality) ? Model.Practicality : "")">
+        </div>
+        <div class="form-group">
+            <label>หมายเหตุ</label>
+            <textarea id="Comment" name="Comment" class="form-control" rows="5">@(Model != null && !string.IsNullOrEmpty(Model.Comment) ? Model.Comment : "")</textarea>
+        </div>
+   </div>
+</div>

@@ -1,0 +1,210 @@
+﻿@using STD.Models.DB;
+@{
+
+    //Schedule
+    Layout = null;
+    ViewData["Title"] = "Schedule";
+    int AuditManagementID = ViewBag.AuditManagementID ?? 0;
+}
+
+<div class="row">
+    <div class="col-md-12 mb-3">
+        <button type="button" class="btn btn-primary" onclick="openModalSchedule()">
+            <i class="fas fa-plus"></i> เพิ่มข้อมูล
+        </button>
+    </div>
+    <div class="col-md-12 table-responsive">
+        <table id="ScheduleTable" class="table table-bordered table-striped table-hover" style="width:100%"></table>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalSchedule" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">กำหนดการ</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="clearData()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="FormSchedule">
+                <div class="modal-body">
+                    <div id="ContentSchedule" class="container-fluid"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearData()">ปิดหน้าต่าง</button>
+                    <button type="submit" id="SaveSchedule" class="btn btn-success">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#ScheduleTable').DataTable({
+            serverSide: false,
+            bDestroy: true,
+            pageLength: 10,
+            searching: true,
+            info: true,
+            filter: true,
+            responsive: true,
+            lengthMenu: [10, 20, 50, 100, 200, 500, 1000],
+            language: {
+                processing: "กำลังประมวลผล...",
+                loadingRecords: "Loading...",
+                lengthMenu: "แสดง _MENU_ รายการ",
+                search: "ค้นหา :",
+                zeroRecords: "<font color='red'><center>ไม่พบข้อมูลที่คุณต้องการ ค้นหา</center></font>",
+                info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
+                infoEmpty: "แสดง 0 ถึง 0 จากทั้งหมด 0 รายการ",
+                infoFiltered: "(ค้นหา จากทั้งหมด _MAX_ รายการ)",
+                paginate: {
+                    first: "หน้าแรก",
+                    last: "หน้าสุดท้าย",
+                    next: "ถัดไป",
+                    previous: "ก่อนหน้า",
+                },
+            },
+            ajax: {
+                url: '@Url.Action("GetSchedule", "Schedule")',
+                type: 'POST',
+                data: { AuditManagementID: '@AuditManagementID' }
+            },
+            columns: [
+                {
+                    data: null, title: "#", "autoWidth": true, width: "50px",
+                    render: function (d, t, r, m) {
+                        return m.row + 1;
+                    }
+                },
+                {
+                    data: 'scheduleDetail', name: "scheduleDetail", title: "รายละเอียดการปฏิบัติงาน", "autoWidth": true,
+                },
+                {
+                    data: 'scheduleDoc', name: "scheduleDoc", title: "เอกสารที่ขอให้จัดเตรียม", "autoWidth": true,
+                },
+                {
+                    data: 'scheduleDate', name: "scheduleDate", title: "วันที่", "autoWidth": true,
+                },
+                {
+                    data: 'scheduleTime', name: "scheduleTime", title: "เวลา", "autoWidth": true,
+                },
+                {
+                    data: 'scheduleID', name: "scheduleID", title: "Action", orderable: false, width: "200px",
+                    render: function (d, t, r) {
+                        return `
+                            <div class="text-center">
+                                <button class="btn btn-sm btn-info" onclick="openModalSchedule(${d})">
+                                    <i class="fas fa-edit"></i> แก้ไข
+                                </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteSchedule(${d})">
+                                    <i class="fas fa-trash"></i> ลบ
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            ],
+            order: [[0, 'asc']]
+        })
+    })
+
+     $('#FormSchedule').submit(function (e) {
+        e.preventDefault()
+
+        const _FormData = $(this).serializeFormJSON()
+        const _Data = {
+            ScheduleID: _FormData.ScheduleID ? _FormData.ScheduleID : 0,
+            AuditManagementID: @AuditManagementID,
+            ScheduleDetail: _FormData.ScheduleDetail ? _FormData.ScheduleDetail : 0,
+            ScheduleDoc: _FormData.ScheduleDoc ? _FormData.ScheduleDoc : '',
+            ScheduleDate: _FormData.ScheduleDate ? _FormData.ScheduleDate : '',
+            ScheduleTime: _FormData.ScheduleTime ? _FormData.ScheduleTime : '',
+        }
+
+        // console.log(_Data)
+        // return;
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะบันทึกข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("SaveSchedule", "Schedule")',
+                type: 'POST',
+                data: _Data,
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message });
+                        return
+                    }
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
+                    LoadDataTable('ScheduleTable');
+                    clearData();
+                }
+            })
+        })
+    })
+
+    function openModalSchedule(ScheduleID = 0) {
+        $('#ContentSchedule').html('')
+        $.ajax({
+            url: '@Url.Action("GetScheduleForm", "Schedule")?ScheduleID=' + ScheduleID,
+            type: 'GET',
+            dataType: 'html',
+            success: function (res) {
+                $('#ContentSchedule').html(res)
+                $('#ModalSchedule').modal('show')
+            }
+        })
+    }
+
+    function deleteSchedule(ScheduleID = 0) {
+        if (ScheduleID == '' || ScheduleID <= '0') {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'ไม่พบข้อมูลที่ต้องการลบ' })
+            return
+        }
+
+        Swal.fire({
+            title: 'คุณแน่ใจไหม?',
+            text: "คุณจะลบข้อมูล!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "ตกลง",
+            cancelButtonText: "ยกเลิก",
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url: '@Url.Action("DeleteSchedule", "Schedule")',
+                type: 'POST',
+                data: { ScheduleID: ScheduleID },
+                dataType: 'json',
+                success: function (res) {
+                    if (!res.status) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message })
+                        return
+                    }
+                    Swal.fire({  icon: 'success', title: 'สำเร็จ', text: res.message })
+                    LoadDataTable('ScheduleTable')
+                }
+            })
+        })
+    }
+
+    function clearData(){
+        $('#ModalSchedule').modal('hide')
+        $('#ContentSchedule').html('')
+        $('#FormSchedule')[0].reset()
+    }
+</script>
